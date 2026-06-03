@@ -246,12 +246,26 @@ async function request<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
   const config: RequestInit = {
     ...options,
     headers,
+    signal: controller.signal,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error("Request timed out. Please check your connection or try again.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
   
   let data: any = {};
   try {
@@ -261,14 +275,17 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    // Automatically intercept 401 Unauthorized or 403 Forbidden to handle session expiration
-    if ((response.status === 401 || response.status === 403) && endpoint !== "/admin/login") {
+    if (response.status === 401 && endpoint !== "/admin/login") {
       removeAdminToken();
       if (typeof window !== "undefined") {
         window.location.href = "/login?expired=true";
       }
     }
     throw new Error(data.message || data.error || `HTTP error ${response.status}`);
+  }
+
+  if (data.success === false) {
+    throw new Error(data.message || data.error || "Request failed");
   }
 
   // Handle standard success wrapper from backend: { success: true, data: ... }

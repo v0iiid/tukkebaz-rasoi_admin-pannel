@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (!GlobalCache.preloaded) {
         GlobalCache.preloaded = true;
         
-        // 1. Partners & Payouts Preload
+        // 1. Partners & Payouts Preload (needed for navigation badge)
         Promise.all([
           api.getPendingPartners().catch(() => []),
           api.adminGetAllPartners().catch(() => []),
@@ -37,41 +37,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           GlobalCache.partnersAll = all || [];
           GlobalCache.partnersPayouts = payouts || [];
           if (pending && pending.length > 0) setPendingPartnersCount(pending.length);
-        });
-
-        // 2. Analytics & Ledger Preload
-        Promise.all([
-          api.getAnalytics().catch(() => ({ recentBookings: [] })),
-          api.getKitchenOrders().catch(() => [])
-        ]).then(([analyticsRes, ordersRes]) => {
-          const allBookings = (analyticsRes as any).recentBookings || [];
-          const allOrders = (ordersRes as any) || [];
-          const unifiedBookings = allBookings.map((b: any) => ({
-            id: b.id, type: b.kind, title: b.room?.title || b.service?.title || b.kind,
-            amount: b.amount || 0, quantity: b.quantity || 1, paymentStatus: b.paymentStatus,
-            createdAt: b.createdAt, bookedFor: b.bookedFor,
-            user: { name: b.user?.name || "Customer", email: b.user?.email || "No Email" }
-          }));
-          const unifiedOrders = allOrders.map((o: any) => ({
-            id: o.id, type: "FOOD_GROCERY", title: `Order #${o.orderNumber}`,
-            amount: o.totalAmount || 0, quantity: 1, paymentStatus: o.paymentStatus,
-            createdAt: o.createdAt, bookedFor: o.createdAt,
-            user: { name: o.user?.name || "Customer", email: o.user?.email || "No Email" }
-          }));
-          const combined = [...unifiedBookings, ...unifiedOrders];
-          GlobalCache.analyticsTx = combined;
-          GlobalCache.ledgerTx = combined;
-        });
-
-        // 3. Catalog Preload
-        Promise.all([
-          api.getRooms().catch(() => []),
-          api.getServices().catch(() => []),
-          api.getKitchenItems().catch(() => [])
-        ]).then(([rooms, services, dItems]) => {
-          GlobalCache.catalogRooms = rooms;
-          GlobalCache.catalogServices = services;
-          GlobalCache.catalogDeliveryItems = dItems;
         });
       } else {
         // Just update badge if already preloaded
