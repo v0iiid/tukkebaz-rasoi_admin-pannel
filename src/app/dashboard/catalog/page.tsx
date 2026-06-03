@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, Room, Service, DeliveryItem, DeliveryOrder,  } from "@/lib/api";
+import { api, Room, Service, DeliveryItem, DeliveryOrder, ServiceType } from "@/lib/api";
 import { GlobalCache } from "@/lib/cache";
 import {  X } from "lucide-react";
 
@@ -78,14 +78,14 @@ export default function CatalogPage() {
   // Catalog Lists
   const [rooms, setRooms] = useState<Room[]>(GlobalCache.catalogRooms || []);
   const [services, setServices] = useState<Service[]>(GlobalCache.catalogServices || []);
-  const [deliveryCategories, setDeliveryCategories] = useState<DeliveryCategory[]>(GlobalCache.catalogDeliveryCats || []);
+
   const [deliveryItems, setDeliveryItems] = useState<DeliveryItem[]>(GlobalCache.catalogDeliveryItems || []);
 
   // Pending counts for badges
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>(GlobalCache.catalogPendingCounts || { rooms: 0, services: 0, food: 0, grocery: 0 });
 
-  // Home Page Icons (Local mock management)
-  const [homeIcons, setHomeIcons] = useState<string[]>([
+  // Home Page Icons
+  const [homeIcons, setHomeIcons] = useState<string[]>(GlobalCache.catalogHomeIcons || [
     "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300",
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300",
   ]);
@@ -158,17 +158,28 @@ export default function CatalogPage() {
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
+  const handleUpdateHomeIcons = async (newIcons: string[]) => {
+    setHomeIcons(newIcons);
+    GlobalCache.catalogHomeIcons = newIcons;
+    try {
+      await api.updateHomeIcons(newIcons);
+    } catch (err: any) {
+      console.error("Failed to update home icons", err);
+    }
+  };
+
   const fetchCatalog = useCallback(async (showPulse = !GlobalCache.catalogRooms) => {
     try {
       if (showPulse) setLoading(true);
       setError(null);
 
-      const [analytics, orders, roomsData, servicesData, dItemsData] = await Promise.all([
+      const [analytics, orders, roomsData, servicesData, dItemsData, iconsData] = await Promise.all([
         api.getAnalytics().catch(() => ({ recentBookings: [] })),
         api.getKitchenOrders().catch(() => []),
         api.getRooms().catch(() => []),
         api.getServices().catch(() => []),
-        api.getKitchenItems().catch(() => [])
+        api.getKitchenItems().catch(() => []),
+        api.getHomeIcons().catch(() => [])
       ]);
 
       const bookings = analytics.recentBookings || [];
@@ -183,6 +194,10 @@ export default function CatalogPage() {
       GlobalCache.catalogServices = servicesData;
       GlobalCache.catalogDeliveryItems = dItemsData;
       GlobalCache.catalogPendingCounts = newCounts;
+      if (iconsData && iconsData.length > 0) {
+        GlobalCache.catalogHomeIcons = iconsData;
+        setHomeIcons(iconsData);
+      }
 
       setRooms(roomsData);
       setServices(servicesData);
@@ -534,7 +549,10 @@ export default function CatalogPage() {
                 if (file) {
                   uploadFile(
                     file,
-                    (url) => setHomeIcons((prev) => [...prev, url].slice(0, 5)),
+                    (url) => {
+                      const newIcons = [...homeIcons, url].slice(0, 5);
+                      handleUpdateHomeIcons(newIcons);
+                    },
                     "homeIconUpload"
                   );
                 }
@@ -549,7 +567,10 @@ export default function CatalogPage() {
             <div key={idx} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
               <img src={url} alt={`icon-${idx}`} className="h-full w-full object-cover" />
               <button
-                onClick={() => setHomeIcons((prev) => prev.filter((_, i) => i !== idx))}
+                onClick={() => {
+                  const newIcons = homeIcons.filter((_, i) => i !== idx);
+                  handleUpdateHomeIcons(newIcons);
+                }}
                 className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
               >
                 <X size={10} />

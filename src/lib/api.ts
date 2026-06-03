@@ -112,6 +112,8 @@ export interface ServiceActivityOption {
   pricePerGuest: number;
 }
 
+export type ServiceType = "RENT_SCOOTY" | "TRIP" | "CAMPING" | "DRONE_SHOOTING" | "OTHER";
+
 export interface Service {
   id: string;
   title: string;
@@ -119,7 +121,7 @@ export interface Service {
   price: number;
   imageUrl?: string | null;
   imageUrls: string[];
-  type: "RENT_SCOOTY" | "TRIP" | "CAMPING" | "DRONE_SHOOTING" | "OTHER";
+  type: ServiceType;
   detailSections: ServiceDetailSection[];
   activityOptions: ServiceActivityOption[];
   requiredDocuments: string[];
@@ -438,6 +440,19 @@ export const api = {
     return request<{ message: string }>(`/admin/partner-payouts/${partnerId}/clear`, {
       method: "POST",
       body: JSON.stringify({ utrNumber }),
+    });
+  },
+
+  // Settings
+  async getHomeIcons() {
+    const data = await request<{ icons?: string[] }>("/admin/settings/home-icons");
+    return data.icons || [];
+  },
+
+  async updateHomeIcons(icons: string[]) {
+    return request<{ icons: string[] }>("/admin/settings/home-icons", {
+      method: "PUT",
+      body: JSON.stringify({ icons }),
     });
   }
 };

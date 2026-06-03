@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
       <div className="bg-red-50 border border-red-200 rounded-[24px] p-6 text-center max-w-md mx-auto my-10">
         <p className="text-red-700 font-semibold">{error}</p>
         <button
-          onClick={fetchData}
+          onClick={() => fetchData()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-full text-sm font-semibold active:scale-95 transition-all"
         >
           Retry Sync
@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
           <h2 className="text-2xl font-extrabold text-[#111111] tracking-tight">Analytics</h2>
         </div>
         <button
-          onClick={fetchData}
+          onClick={() => fetchData()}
           className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
           style={{ paddingLeft: "20px", paddingRight: "20px", paddingTop: "10px", paddingBottom: "10px" }}
         >

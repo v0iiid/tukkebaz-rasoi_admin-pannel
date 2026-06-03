@@ -157,7 +157,7 @@ export default function PurchasesPage() {
       <div className="bg-red-50 border border-red-200 rounded-[24px] p-6 text-center max-w-md mx-auto my-10 animate-fade-in">
         <p className="text-red-700 font-semibold">{error}</p>
         <button
-          onClick={fetchPurchases}
+          onClick={() => fetchPurchases()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-full text-sm font-semibold active:scale-95 transition-all"
         >
           Retry Sync
@@ -174,7 +174,7 @@ export default function PurchasesPage() {
           <p className="text-xs text-[#66666A] mt-1 font-medium">Guest, booking date, payment status, and revenue details.</p>
         </div>
         <button
-          onClick={fetchPurchases}
+          onClick={() => fetchPurchases()}
           className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer shadow-xs"
           style={{ paddingLeft: "20px", paddingRight: "20px", paddingTop: "10px", paddingBottom: "10px" }}
         >
