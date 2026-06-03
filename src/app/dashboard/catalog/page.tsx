@@ -85,10 +85,9 @@ export default function CatalogPage() {
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>(GlobalCache.catalogPendingCounts || { rooms: 0, services: 0, food: 0, grocery: 0 });
 
   // Home Page Icons
-  const [homeIcons, setHomeIcons] = useState<string[]>(GlobalCache.catalogHomeIcons || [
-    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300",
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300",
-  ]);
+  const [homeIcons, setHomeIcons] = useState<{ url: string; public_id: string }[]>(
+    GlobalCache.catalogHomeIcons || []
+  );
 
   // Leaflet Map instance ref
   const mapRef = useRef<any>(null);
@@ -158,13 +157,36 @@ export default function CatalogPage() {
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  const handleUpdateHomeIcons = async (newIcons: string[]) => {
-    setHomeIcons(newIcons);
-    GlobalCache.catalogHomeIcons = newIcons;
+  const uploadHeroImageFile = async (file: File) => {
+    if (homeIcons.length >= 5) {
+      alert("Maximum 5 images allowed.");
+      return;
+    }
+    setUploadingField("homeIconUpload");
     try {
-      await api.updateHomeIcons(newIcons);
-    } catch (err: any) {
-      console.error("Failed to update home icons", err);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Str = (reader.result as string).split(",")[1];
+          const res = await api.uploadHeroImage(base64Str);
+          if (!res?.url || !res?.public_id) {
+            throw new Error("Upload failed to return valid image data.");
+          }
+          const newIcons = [
+            ...homeIcons,
+            { url: res.url, public_id: res.public_id }
+          ].slice(0, 5);
+          setHomeIcons(newIcons);
+          GlobalCache.catalogHomeIcons = newIcons;
+        } catch (err: any) {
+          alert(err.message || "Image upload failed.");
+        } finally {
+          setUploadingField(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setUploadingField(null);
     }
   };
 
@@ -179,7 +201,7 @@ export default function CatalogPage() {
         api.getRooms().catch(() => []),
         api.getServices().catch(() => []),
         api.getKitchenItems().catch(() => []),
-        api.getHomeIcons().catch(() => [])
+        api.getHeroImages().catch(() => [])
       ]);
 
       const bookings = analytics.recentBookings || [];
@@ -194,10 +216,9 @@ export default function CatalogPage() {
       GlobalCache.catalogServices = servicesData;
       GlobalCache.catalogDeliveryItems = dItemsData;
       GlobalCache.catalogPendingCounts = newCounts;
-      if (iconsData && iconsData.length > 0) {
-        GlobalCache.catalogHomeIcons = iconsData;
-        setHomeIcons(iconsData);
-      }
+      
+      GlobalCache.catalogHomeIcons = iconsData || [];
+      setHomeIcons(iconsData || []);
 
       setRooms(roomsData);
       setServices(servicesData);
@@ -547,14 +568,7 @@ export default function CatalogPage() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  uploadFile(
-                    file,
-                    (url) => {
-                      const newIcons = [...homeIcons, url].slice(0, 5);
-                      handleUpdateHomeIcons(newIcons);
-                    },
-                    "homeIconUpload"
-                  );
+                  uploadHeroImageFile(file);
                 }
               }}
             />
@@ -563,20 +577,33 @@ export default function CatalogPage() {
         </div>
 
         <div className="flex gap-3 overflow-x-auto py-1.5 scrollbar-none">
-          {homeIcons.map((url, idx) => (
-            <div key={idx} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
-              <img src={url} alt={`icon-${idx}`} className="h-full w-full object-cover" />
-              <button
-                onClick={() => {
-                  const newIcons = homeIcons.filter((_, i) => i !== idx);
-                  handleUpdateHomeIcons(newIcons);
-                }}
-                className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
-              >
-                <X size={10} />
-              </button>
-            </div>
-          ))}
+          {homeIcons
+            .filter((img) => img?.url && img?.public_id)
+            .map((img, idx) => (
+              <div key={img.public_id} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
+                <img src={img.url} alt={`icon-${idx}`} className="h-full w-full object-cover" />
+                <button
+                  onClick={async () => {
+                    if (confirm("Are you sure you want to delete this icon?")) {
+                      setUploadingField("homeIconUpload");
+                      try {
+                        await api.deleteHeroImage(img.public_id);
+                        const newIcons = homeIcons.filter((_, i) => i !== idx);
+                        setHomeIcons(newIcons);
+                        GlobalCache.catalogHomeIcons = newIcons;
+                      } catch (err: any) {
+                        alert(err.message || "Failed to delete image.");
+                      } finally {
+                        setUploadingField(null);
+                      }
+                    }
+                  }}
+                  className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            ))}
         </div>
         <p className="text-[11px] text-[#9A9AA0] font-bold mt-2">{homeIcons.length}/5</p>
       </div>

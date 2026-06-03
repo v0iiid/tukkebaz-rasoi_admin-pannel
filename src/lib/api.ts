@@ -469,5 +469,28 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ icons }),
     });
+  },
+
+  // Hero Images (Home Page Icons) synced with Vercel & Backend Cloudinary
+  async getHeroImages() {
+    const res = await fetch("https://integration-sigma-two.vercel.app/api/hero");
+    if (!res.ok) {
+      throw new Error(`Failed to fetch hero images: ${res.status}`);
+    }
+    const json = await res.json();
+    return (json.images || []) as { url: string; public_id: string }[];
+  },
+
+  async uploadHeroImage(imageBase64: string) {
+    return request<{ url: string; public_id: string }>("/admin/media/upload", {
+      method: "POST",
+      body: JSON.stringify({ image: `data:image/jpeg;base64,${imageBase64}` }),
+    });
+  },
+
+  async deleteHeroImage(public_id: string) {
+    return request<{ message: string; public_id: string }>(`/admin/media/${public_id}`, {
+      method: "DELETE",
+    });
   }
 };
