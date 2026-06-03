@@ -1,26 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+@source "../**/*.{js,ts,jsx,tsx}";
+
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Color System from Tukkebaaz Premium Design Guide */
+  --primary: #ED7D4B; /* Terracotta Orange */
+  --primary-hover: #EE5B1B;
+  --primary-gradient: linear-gradient(135deg, #ED7D4B 0%, #FF8A50 100%);
+  --primary-glow: rgba(237, 125, 75, 0.08);
+  
+  --bg-main: #ECECEE; /* Surface Main */
+  --bg-sidebar: #121214; /* Surface Dark */
+  --bg-card: #FFFFFF; /* Surface Card */
+  --bg-card-hover: #FAFBFC;
+  --bg-muted: #F2F2F3; /* Surface Muted */
+  
+  --border-color: #E4E4E7; /* Border Default */
+  --border-subtle: #EBEBEF; /* Border Subtle */
+  --border-color-active: rgba(237, 125, 75, 0.4);
+  
+  --text-primary: #111111; /* Sharp Charcoal Text */
+  --text-secondary: #66666A; /* Slate Text */
+  --text-muted: #6C6C70; /* Cool Muted Text */
+  --text-tertiary: #8D8D93;
+  
+  --success: #22C55E;
+  --warning: #E5B800;
+  --error: #F04646;
+  --info-blue: #2E7CF6;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  
+  --radius-xl: 28px;
+  --radius-lg: 24px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s ease-out;
+  
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 15px rgba(237, 125, 75, 0.15);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* Premium Card Panels */
+.glass-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-smooth);
+}
+
+.glass-panel-interactive:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-color-active);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.gradient-text {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-bg {
+  background: var(--primary-gradient);
+}
+
+.input-glow:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(237, 125, 75, 0.15);
+  transition: var(--transition-fast);
+}
+
+/* Card Metric Styling */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-gradient);
+  opacity: 0.9;
 }
