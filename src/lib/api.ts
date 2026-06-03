@@ -473,7 +473,7 @@ export const api = {
 
   // Hero Images (Home Page Icons) synced with Vercel & Backend Cloudinary
   async getHeroImages() {
-    const res = await fetch("https://integration-sigma-two.vercel.app/api/hero");
+    const res = await fetch("/api/hero");
     if (!res.ok) {
       throw new Error(`Failed to fetch hero images: ${res.status}`);
     }
