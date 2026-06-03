@@ -1,5 +1,5 @@
-export const API_BASE_URL = 
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://admin.tukkebazrasoi.com/api";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://tukkabaz-backend.onrender.com/";
 
 // Type definitions matching Prisma / Express backend payloads
 
@@ -237,7 +237,7 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getAdminToken();
-  
+
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
   if (token) {
@@ -264,7 +264,7 @@ async function request<T>(
   } finally {
     clearTimeout(timeoutId);
   }
-  
+
   let data: any = {};
   try {
     data = await response.json();
