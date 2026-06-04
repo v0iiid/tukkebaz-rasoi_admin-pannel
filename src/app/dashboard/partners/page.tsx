@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { api, DeliveryPartner, PartnerPayoutRequest } from "@/lib/api";
 import { GlobalCache } from "@/lib/cache";
-import { RefreshCw, CheckCircle2, Wallet, ExternalLink, ShieldAlert, BadgeCheck, BadgeAlert, Phone, MessageSquare, X } from "lucide-react";
+import { RefreshCw, CheckCircle2, Wallet, ExternalLink, ShieldAlert, BadgeCheck, BadgeAlert, Phone, MessageSquare, X, User } from "lucide-react";
 
 export default function PartnersPage() {
   const [pendingPartners, setPendingPartners] = useState<DeliveryPartner[]>(GlobalCache.partnersPending || []);
@@ -496,9 +496,23 @@ export default function PartnersPage() {
                   >
                     <div>
                       <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-base font-bold text-[#111111] truncate">{partner.name}</h4>
-                          <p className="text-xs text-[#66666A] mt-1 font-medium">{partner.phone} • {partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {partner.profilePhotoUrl ? (
+                            <img
+                              src={partner.profilePhotoUrl}
+                              className="h-12 w-12 rounded-full object-cover shrink-0 border border-[#EBEBEF]"
+                              alt=""
+                              onError={(e) => { (e.target as any).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-full bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center shrink-0">
+                              <User size={20} className="text-[#66666A]" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-base font-bold text-[#111111] truncate">{partner.name}</h4>
+                            <p className="text-xs text-[#66666A] mt-1 font-medium">{partner.phone} • {partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
+                          </div>
                         </div>
                         <span
                           className={`inline-flex items-center gap-1 rounded-full text-[10px] font-bold tracking-wide uppercase shrink-0`}
@@ -536,6 +550,75 @@ export default function PartnersPage() {
                         </span>
                       </div>
 
+                      {/* Documents / Photos Preview */}
+                      {(partner.profilePhotoUrl || partner.dlUrl) && (
+                        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+                          {partner.profilePhotoUrl ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Selfie Preview</span>
+                              <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                                <img
+                                  src={partner.profilePhotoUrl}
+                                  className="w-full h-24 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                                  alt="Selfie"
+                                  onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Selfie Preview</span>
+                              <div className="h-24 rounded-xl bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center text-center p-2">
+                                <span className="text-[10px] text-[#9A9AA0] font-medium leading-tight">No selfie</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {partner.dlUrl ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Driver License</span>
+                              <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5] h-24 flex items-center justify-center">
+                                {partner.dlUrl.startsWith("http") && !partner.dlUrl.includes("drive.google.com") ? (
+                                  <img
+                                    src={partner.dlUrl}
+                                    className="w-full h-24 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                                    alt="License"
+                                    onClick={() => window.open(partner.dlUrl!, "_blank")}
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={() => window.open(partner.dlUrl!, "_blank")}
+                                    className="w-full h-full flex flex-col items-center justify-center p-2 bg-[#F2F2F7] hover:bg-[#E5E5EA] transition-colors rounded-xl text-center cursor-pointer"
+                                  >
+                                    <ExternalLink size={16} className="text-[#111111]" />
+                                    <span className="mt-1 text-[9px] font-semibold text-[#111111] leading-tight">Open Document</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Driver License</span>
+                              <div className="h-24 rounded-xl bg-[#FFF5F5] border border-[#FECACA] flex items-center justify-center text-center p-2">
+                                <span className="text-[10px] text-[#DC2626] font-medium leading-tight">No DL doc</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Stats Section */}
+                      <div className="mt-4 grid grid-cols-2 gap-3 bg-[#F7F7F8] border border-[#EBEBEF] rounded-xl p-3">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Orders Delivered</span>
+                          <span className="text-sm font-extrabold text-[#111111] mt-0.5">{partner.deliveredCount ?? 0}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Total Income</span>
+                          <span className="text-sm font-extrabold text-[#1F7A1F] mt-0.5">₹{partner.totalEarnings ?? 0}</span>
+                        </div>
+                      </div>
+
                       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-[#66666A]">Linked UPI ID:</span>
@@ -551,9 +634,21 @@ export default function PartnersPage() {
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                       <span className="text-xs text-[#66666A]">Availability Status</span>
                       {partner.profileStatus === "APPROVED" ? (
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${partner.isAvailable ? "text-[#10B981]" : "text-[#9A9AA0]"}`}>
-                          <span className={`h-2 w-2 rounded-full ${partner.isAvailable ? "bg-[#10B981] animate-pulse" : "bg-[#9A9AA0]"}`} />
-                          {partner.isAvailable ? "On Duty" : "Offline"}
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                          partner.isAvailable 
+                            ? "text-[#10B981]" 
+                            : partner.isOnline 
+                              ? "text-[#D97706]" 
+                              : "text-[#9A9AA0]"
+                        }`}>
+                          <span className={`h-2 w-2 rounded-full ${
+                            partner.isAvailable 
+                              ? "bg-[#10B981] animate-pulse" 
+                              : partner.isOnline 
+                                ? "bg-[#D97706]" 
+                                : "bg-[#9A9AA0]"
+                          }`} />
+                          {partner.isAvailable ? "On Duty" : partner.isOnline ? "Online" : "Offline"}
                         </span>
                       ) : partner.profileStatus === "PENDING" ? (
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#D97706]">

@@ -176,6 +176,7 @@ export interface DeliveryPartner {
   phone: string;
   vehicleType: string;
   isAvailable: boolean;
+  isOnline?: boolean;
   currentOrderId?: string | null;
   currentLat?: number | null;
   currentLng?: number | null;
@@ -184,6 +185,8 @@ export interface DeliveryPartner {
   profilePhotoUrl?: string | null;
   upiId?: string | null;
   unpaidAmount?: number | null;
+  deliveredCount?: number | null;
+  totalEarnings?: number | null;
 }
 
 export interface PartnerPayoutRequest {
