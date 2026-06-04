@@ -610,7 +610,7 @@ export default function CatalogPage() {
       const category: "FOOD" | "GROCERY" = catalogCategory === "food" ? "FOOD" : "GROCERY";
       const payload: Partial<DeliveryItem> = {
         name: deliveryForm.name,
-        description: deliveryForm.description || "",
+        description: "",
         price: parseFloat(deliveryForm.price) || 0,
         imageUrl: deliveryForm.imageUrl || null,
         category,
@@ -1563,17 +1563,6 @@ export default function CatalogPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="delivery-description" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Item Description</label>
-                <textarea
-                  id="delivery-description"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
-                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Item description"
-                  value={deliveryForm.description}
-                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="delivery-price" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Price (INR)</label>
@@ -1898,7 +1887,6 @@ export default function CatalogPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-base font-bold text-[#121212]">{item.name}</h3>
-                        <p className="text-sm text-[#5F6064] mt-1 leading-relaxed">{item.description}</p>
                         <p className="text-xs text-[#64646A] mt-1.5 font-bold">
                           Category: {item.category} | Qty: {item.availableQuantity} | {item.isAvailable ? "Available" : "Unavailable"}
                         </p>
