@@ -146,6 +146,7 @@ export default function CatalogPage() {
   // Catalog Lists
   const [rooms, setRooms] = useState<Room[]>(GlobalCache.catalogRooms || []);
   const [services, setServices] = useState<Service[]>(GlobalCache.catalogServices || []);
+  const [serviceTypes, setServiceTypes] = useState<string[]>(GlobalCache.catalogServiceTypes || []);
 
   const [deliveryItems, setDeliveryItems] = useState<DeliveryItem[]>(GlobalCache.catalogDeliveryItems || []);
 
@@ -201,7 +202,7 @@ export default function CatalogPage() {
     latitude: "29.472403",
     longitude: "79.646942",
     ctaLabel: "",
-    type: "RENT_SCOOTY",
+    type: serviceTypes[0] || "RENT_SCOOTY",
   });
 
   const initialDeliveryForm = (): DeliveryItemFormState => ({
@@ -269,13 +270,14 @@ export default function CatalogPage() {
       if (showPulse) setLoading(true);
       setError(null);
 
-      const [analytics, orders, roomsData, servicesData, dItemsData, iconsData] = await Promise.all([
+      const [analytics, orders, roomsData, servicesData, dItemsData, iconsData, sTypesData] = await Promise.all([
         api.getAnalytics().catch(() => ({ recentBookings: [] })),
         api.getKitchenOrders().catch(() => []),
         api.getRooms().catch(() => []),
         api.getServices().catch(() => []),
         api.getKitchenItems().catch(() => []),
-        api.getHeroImages().catch(() => [])
+        api.getHeroImages().catch(() => []),
+        api.getServiceTypes().catch(() => ["RENT_SCOOTY", "DRONE_SHOOT", "CAMPING", "TREKKING_WITH_CAMPING", "CAB_AND_TAXI", "CAFE"])
       ]);
 
       const bookings = analytics.recentBookings || [];
@@ -290,6 +292,8 @@ export default function CatalogPage() {
       GlobalCache.catalogServices = servicesData;
       GlobalCache.catalogDeliveryItems = dItemsData;
       GlobalCache.catalogPendingCounts = newCounts;
+      GlobalCache.catalogServiceTypes = sTypesData;
+      setServiceTypes(sTypesData);
 
       // Merge hero images from API with localStorage cache
       // This ensures newly uploaded icons survive refresh even if the integration API hasn't synced yet
@@ -1160,7 +1164,7 @@ export default function CatalogPage() {
               <div className="mt-2">
                 <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Service Type</span>
                 <div className="flex flex-wrap gap-2 bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl p-2.5">
-                  {(["RENT_SCOOTY", "TRIP", "CAMPING", "DRONE_SHOOTING", "OTHER"] as ServiceType[]).map((st) => (
+                  {(serviceTypes.length > 0 ? serviceTypes : ["RENT_SCOOTY", "DRONE_SHOOT", "CAMPING", "TREKKING_WITH_CAMPING", "CAB_AND_TAXI", "CAFE"]).map((st) => (
                     <button
                       key={st}
                       type="button"
@@ -1175,7 +1179,7 @@ export default function CatalogPage() {
                         color: serviceForm.type === st ? "#FFFFFF" : "#33343A",
                       }}
                     >
-                      {st.replace("_", " ")}
+                      {st.replace(/_/g, " ")}
                     </button>
                   ))}
                 </div>

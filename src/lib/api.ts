@@ -110,7 +110,7 @@ export interface ServiceActivityOption {
   pricePerGuest: number;
 }
 
-export type ServiceType = "RENT_SCOOTY" | "TRIP" | "CAMPING" | "DRONE_SHOOTING" | "OTHER";
+export type ServiceType = string;
 
 export interface Service {
   id: string;
@@ -375,6 +375,10 @@ export const api = {
     return request<{ message: string }>(`/admin/services/${id}`, {
       method: "DELETE",
     });
+  },
+
+  async getServiceTypes() {
+    return request<string[]>("/admin/services/types");
   },
 
   // Kitchen / Delivery Items (Tukkabz Rasoi)
