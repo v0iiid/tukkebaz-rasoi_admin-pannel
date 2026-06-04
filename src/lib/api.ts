@@ -93,6 +93,7 @@ export interface Room {
   longitude?: number | null;
   capacity: number;
   available: boolean;
+  googleMapUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -129,6 +130,7 @@ export interface Service {
   longitude?: number | null;
   ctaLabel?: string | null;
   available: boolean;
+  googleMapUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

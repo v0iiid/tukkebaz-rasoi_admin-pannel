@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, Room, Service, DeliveryItem, DeliveryOrder, ServiceType } from "@/lib/api";
 import { GlobalCache } from "@/lib/cache";
-import { X, CheckCircle2, ShieldAlert, BadgeAlert } from "lucide-react";
+import { X, CheckCircle2, ShieldAlert, BadgeAlert, MapPin } from "lucide-react";
 
 const formatDateTime = (value?: string | null): string => {
   if (!value) return "Not available";
@@ -34,6 +34,7 @@ type RoomFormState = {
   latitude: string;
   longitude: string;
   capacity: string;
+  googleMapUrl: string;
 };
 
 type ServiceFormState = {
@@ -52,6 +53,7 @@ type ServiceFormState = {
   longitude: string;
   ctaLabel: string;
   type: ServiceType;
+  googleMapUrl: string;
 };
 
 type DeliveryItemFormState = {
@@ -185,6 +187,7 @@ export default function CatalogPage() {
     latitude: "29.472403",
     longitude: "79.646942",
     capacity: "2",
+    googleMapUrl: "",
   });
 
   const initialServiceForm = (): ServiceFormState => ({
@@ -203,6 +206,7 @@ export default function CatalogPage() {
     longitude: "79.646942",
     ctaLabel: "",
     type: serviceTypes[0] || "RENT_SCOOTY",
+    googleMapUrl: "",
   });
 
   const initialDeliveryForm = (): DeliveryItemFormState => ({
@@ -419,6 +423,7 @@ export default function CatalogPage() {
       latitude: room.latitude?.toString() || "29.472403",
       longitude: room.longitude?.toString() || "79.646942",
       capacity: room.capacity?.toString() || "2",
+      googleMapUrl: room.googleMapUrl || "",
     });
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -449,6 +454,7 @@ export default function CatalogPage() {
       longitude: service.longitude?.toString() || "79.646942",
       ctaLabel: service.ctaLabel || "",
       type: service.type || "RENT_SCOOTY",
+      googleMapUrl: service.googleMapUrl || "",
     });
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -546,6 +552,7 @@ export default function CatalogPage() {
         latitude: parseFloat(roomForm.latitude) || null,
         longitude: parseFloat(roomForm.longitude) || null,
         capacity: parseInt(roomForm.capacity) || 2,
+        googleMapUrl: roomForm.googleMapUrl || null,
       };
 
       if (roomForm.id) {
@@ -592,6 +599,7 @@ export default function CatalogPage() {
         longitude: parseFloat(serviceForm.longitude) || null,
         ctaLabel: serviceForm.ctaLabel || null,
         type: serviceForm.type,
+        googleMapUrl: serviceForm.googleMapUrl || null,
       };
 
       if (serviceForm.id) {
@@ -1014,6 +1022,19 @@ export default function CatalogPage() {
               </div>
 
               <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="room-map-url" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Google Map Redirect URL</label>
+                <input
+                  id="room-map-url"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="e.g. https://maps.app.goo.gl/..."
+                  value={roomForm.googleMapUrl}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, googleMapUrl: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
                 <label htmlFor="room-owner-phone" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Owner Phone Number</label>
                 <input
                   id="room-owner-phone"
@@ -1082,7 +1103,7 @@ export default function CatalogPage() {
                 <div id="leaflet-map-container" className="w-full rounded-2xl border border-[#DEDEE2] shadow-xs relative z-10 overflow-hidden" style={{ height: "256px" }} />
                 <button
                   type="button"
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${roomForm.latitude},${roomForm.longitude}`, "_blank")}
+                  onClick={() => window.open(roomForm.googleMapUrl || `https://www.google.com/maps/search/?api=1&query=${roomForm.latitude},${roomForm.longitude}`, "_blank")}
                   className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-semibold active:scale-95 transition-all cursor-pointer shadow-xs"
                   style={{ paddingTop: "12px", paddingBottom: "12px", marginTop: "12px" }}
                 >
@@ -1499,6 +1520,19 @@ export default function CatalogPage() {
               </div>
 
               <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="service-map-url" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Google Map Redirect URL</label>
+                <input
+                  id="service-map-url"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="e.g. https://maps.app.goo.gl/..."
+                  value={serviceForm.googleMapUrl}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, googleMapUrl: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
                 <label htmlFor="service-contact-phone" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Contact Phone</label>
                 <input
                   id="service-contact-phone"
@@ -1567,7 +1601,7 @@ export default function CatalogPage() {
                 <div id="leaflet-map-container" className="w-full rounded-2xl border border-[#DEDEE2] shadow-xs relative z-10 overflow-hidden" style={{ height: "256px" }} />
                 <button
                   type="button"
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${serviceForm.latitude},${serviceForm.longitude}`, "_blank")}
+                  onClick={() => window.open(serviceForm.googleMapUrl || `https://www.google.com/maps/search/?api=1&query=${serviceForm.latitude},${serviceForm.longitude}`, "_blank")}
                   className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-semibold active:scale-95 transition-all cursor-pointer shadow-xs"
                   style={{ paddingTop: "12px", paddingBottom: "12px", marginTop: "12px" }}
                 >
@@ -1906,6 +1940,18 @@ export default function CatalogPage() {
                       <div className="flex justify-between items-center mt-5 pt-4 border-t border-gray-100">
                         <p className="text-sm font-bold text-[#1A1A1A]">INR {room.price}</p>
                         <div className="flex gap-2.5">
+                          {room.googleMapUrl && (
+                            <a
+                              href={room.googleMapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                              style={{ paddingLeft: "14px", paddingRight: "14px", paddingTop: "8px", paddingBottom: "8px" }}
+                            >
+                              <MapPin size={14} />
+                              <span>Map</span>
+                            </a>
+                          )}
                           <button
                             onClick={() => handleEditRoom(room)}
                             className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
@@ -1953,6 +1999,18 @@ export default function CatalogPage() {
                       <div className="flex justify-between items-center mt-5 pt-4 border-t border-gray-100">
                         <p className="text-sm font-bold text-[#1A1A1A]">INR {service.price}</p>
                         <div className="flex gap-2.5">
+                          {service.googleMapUrl && (
+                            <a
+                              href={service.googleMapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                              style={{ paddingLeft: "14px", paddingRight: "14px", paddingTop: "8px", paddingBottom: "8px" }}
+                            >
+                              <MapPin size={14} />
+                              <span>Map</span>
+                            </a>
+                          )}
                           <button
                             onClick={() => handleEditService(service)}
                             className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
