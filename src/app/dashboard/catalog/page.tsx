@@ -42,7 +42,7 @@ type ServiceFormState = {
   description: string;
   price: string;
   imageUrl: string;
-  imageUrls: string;
+  imageUrls: string[];
   detailSections: Array<{ title: string; body: string; items: string }>;
   activityOptions: Array<{ id: string; title: string; description: string; pricePerGuest: string }>;
   requiredDocuments: string;
@@ -66,6 +66,7 @@ type DeliveryItemFormState = {
   pieces: string;
   availableQuantity: string;
   isAvailable: boolean;
+  isVeg: boolean;
 };
 
 export default function CatalogPage() {
@@ -191,7 +192,7 @@ export default function CatalogPage() {
     description: "",
     price: "",
     imageUrl: "",
-    imageUrls: "",
+    imageUrls: [],
     detailSections: [],
     activityOptions: [],
     requiredDocuments: "",
@@ -215,6 +216,7 @@ export default function CatalogPage() {
     pieces: "",
     availableQuantity: "100",
     isAvailable: true,
+    isVeg: true,
   });
 
   const [roomForm, setRoomForm] = useState<RoomFormState>(initialRoomForm());
@@ -424,7 +426,7 @@ export default function CatalogPage() {
       description: service.description || "",
       price: service.price?.toString() || "",
       imageUrl: service.imageUrl || "",
-      imageUrls: service.imageUrls?.join(", ") || "",
+      imageUrls: service.imageUrls || [],
       detailSections: service.detailSections?.map((ds) => ({
         title: ds.title || "",
         body: ds.body || "",
@@ -457,9 +459,10 @@ export default function CatalogPage() {
       category: item.category || "FOOD",
       grocerySection: item.grocerySection || "",
       servingInfo: item.servingInfo || "",
-      pieces: item.grocerySection || "",
+      pieces: item.pieces || "",
       availableQuantity: item.availableQuantity?.toString() || "100",
       isAvailable: item.isAvailable,
+      isVeg: item.isVeg ?? true,
     });
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -566,7 +569,7 @@ export default function CatalogPage() {
         description: serviceForm.description,
         price: parseFloat(serviceForm.price) || 0,
         imageUrl: serviceForm.imageUrl || null,
-        imageUrls: serviceForm.imageUrls.split(",").map((s) => s.trim()).filter(Boolean),
+        imageUrls: serviceForm.imageUrls,
         detailSections: serviceForm.detailSections.map((ds) => ({
           title: ds.title,
           body: ds.body,
@@ -614,8 +617,10 @@ export default function CatalogPage() {
         price: parseFloat(deliveryForm.price) || 0,
         imageUrl: deliveryForm.imageUrl || null,
         category,
-        grocerySection: category === "GROCERY" ? deliveryForm.grocerySection : deliveryForm.pieces,
+        grocerySection: category === "GROCERY" ? deliveryForm.grocerySection : null,
         servingInfo: deliveryForm.servingInfo || null,
+        pieces: category === "FOOD" ? deliveryForm.pieces : null,
+        isVeg: category === "FOOD" ? deliveryForm.isVeg : true,
         availableQuantity: parseInt(deliveryForm.availableQuantity) || 0,
         isAvailable: deliveryForm.isAvailable,
       };
@@ -721,7 +726,7 @@ export default function CatalogPage() {
 
       {/* Category Switcher Pills */}
       <div
-        className="flex flex-wrap gap-1 rounded-full bg-white border border-[#EBEBEF] shadow-sm p-1 self-start"
+        className="flex overflow-x-auto gap-1 rounded-full bg-white border border-[#EBEBEF] shadow-sm p-1 self-start max-w-full scrollbar-none"
         style={{ marginBottom: "24px" }}
       >
         {([
@@ -739,7 +744,7 @@ export default function CatalogPage() {
                 setCatalogCategory(cat.key);
                 setFoodSearchQuery("");
               }}
-              className={`relative rounded-full text-sm font-semibold transition-all cursor-pointer ${
+              className={`relative rounded-full text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 active ? "bg-[#111111] text-white" : "text-[#66666A] hover:bg-gray-50 hover:text-[#111111]"
               }`}
               style={{
@@ -766,8 +771,7 @@ export default function CatalogPage() {
         {/* Left Column: Form Section */}
         <div
           ref={formRef}
-          className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-sm"
-          style={{ padding: "28px" }}
+          className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-sm p-4 sm:p-6 md:p-8"
         >
           {catalogCategory === "rooms" && (
             <form onSubmit={saveRoom} className="flex flex-col gap-4">
@@ -833,29 +837,38 @@ export default function CatalogPage() {
 
               {/* Cover image upload */}
               <div>
-                <label htmlFor="room-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Main Room Image</label>
-                <label
-                  className="w-full bg-[#111111] hover:bg-black text-white rounded-[24px] text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
-                  style={{ paddingTop: "12px", paddingBottom: "12px" }}
-                >
-                  <input
-                    id="room-cover-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        uploadFile(file, (url) => setRoomForm((prev) => ({ ...prev, imageUrl: url })), "roomCover");
-                      }
-                    }}
-                  />
-                  {uploadingField === "roomCover" ? "..." : "Upload Image"}
-                </label>
-                {roomForm.imageUrl && (
-                  <div className="mt-2 relative h-24 rounded-[24px] overflow-hidden border border-gray-200">
+                <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Main Room Image</label>
+                {roomForm.imageUrl ? (
+                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={roomForm.imageUrl} alt="Room cover" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setRoomForm((prev) => ({ ...prev, imageUrl: "" }))}
+                      className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
+                ) : (
+                  <label
+                    htmlFor="room-cover-upload"
+                    className="w-full bg-[#111111] hover:bg-black text-white rounded-[24px] text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
+                    style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                  >
+                    <input
+                      id="room-cover-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadFile(file, (url) => setRoomForm((prev) => ({ ...prev, imageUrl: url })), "roomCover");
+                        }
+                      }}
+                    />
+                    {uploadingField === "roomCover" ? "..." : "Upload Image"}
+                  </label>
                 )}
               </div>
 
@@ -942,18 +955,11 @@ export default function CatalogPage() {
 
                     {photoGroup.urls.length > 0 && (
                       <div>
-                        <span className="text-[10px] font-bold text-[#9A9AA0] uppercase block mb-1">Uploaded images</span>
-                        <div
-                          className="bg-white border border-[#EBEBEF] rounded-xl flex flex-col gap-2"
-                          style={{ padding: "12px" }}
-                        >
+                        <span className="text-[10px] font-bold text-[#9A9AA0] uppercase block mb-1.5 ml-1">Uploaded images</span>
+                        <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-xl" style={{ padding: "12px" }}>
                           {photoGroup.urls.map((url, imgIdx) => (
-                            <div
-                              key={imgIdx}
-                              className="flex justify-between items-center bg-[#F7F7F8] rounded-lg border border-[#EBEBEF]"
-                              style={{ padding: "8px" }}
-                            >
-                              <span className="text-[11px] text-[#64646A] truncate max-w-[80%]">{url}</span>
+                            <div key={imgIdx} className="relative h-16 w-16 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
+                              <img src={url} alt={`room-photo-${imgIdx}`} className="h-full w-full object-cover" />
                               <button
                                 type="button"
                                 onClick={() => {
@@ -963,9 +969,9 @@ export default function CatalogPage() {
                                     return { ...prev, roomPhotos: list };
                                   });
                                 }}
-                                className="text-red-500 hover:text-red-700 cursor-pointer"
+                                className="absolute top-1 right-1 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
                               >
-                                <X size={12} />
+                                <X size={8} />
                               </button>
                             </div>
                           ))}
@@ -1177,43 +1183,90 @@ export default function CatalogPage() {
 
               {/* Cover Upload */}
               <div>
-                <label htmlFor="service-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Cover Image</label>
-                <label
-                  className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
-                  style={{ paddingTop: "12px", paddingBottom: "12px" }}
-                >
-                  <input
-                    id="service-cover-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        uploadFile(file, (url) => setServiceForm((prev) => ({ ...prev, imageUrl: url })), "serviceCover");
-                      }
-                    }}
-                  />
-                  {uploadingField === "serviceCover" ? "..." : "Upload Image"}
-                </label>
-                {serviceForm.imageUrl && (
-                  <div className="mt-2 relative h-24 rounded-xl overflow-hidden border border-gray-200">
+                <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Cover Image</label>
+                {serviceForm.imageUrl ? (
+                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={serviceForm.imageUrl} alt="Service cover" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setServiceForm((prev) => ({ ...prev, imageUrl: "" }))}
+                      className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
+                ) : (
+                  <label
+                    htmlFor="service-cover-upload"
+                    className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
+                    style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                  >
+                    <input
+                      id="service-cover-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadFile(file, (url) => setServiceForm((prev) => ({ ...prev, imageUrl: url })), "serviceCover");
+                        }
+                      }}
+                    />
+                    {uploadingField === "serviceCover" ? "..." : "Upload Image"}
+                  </label>
                 )}
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="service-gallery" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Gallery Image URLs (comma-separated)</label>
-                <input
-                  id="service-gallery"
-                  type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Gallery Image URLs (comma-separated)"
-                  value={serviceForm.imageUrls}
-                  onChange={(e) => setServiceForm((prev) => ({ ...prev, imageUrls: e.target.value }))}
-                />
+              {/* Service Gallery Images */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-xs font-bold text-[#64646A] uppercase block ml-1">Gallery Images</label>
+                  {serviceForm.imageUrls.length < 10 && (
+                    <label className="text-xs font-bold text-[#ED7D4B] hover:underline cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            uploadFile(
+                              file,
+                              (url) => setServiceForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, url] })),
+                              "serviceGalleryUpload"
+                            );
+                          }
+                        }}
+                      />
+                      {uploadingField === "serviceGalleryUpload" ? "..." : "+ Add Image"}
+                    </label>
+                  )}
+                </div>
+
+                {serviceForm.imageUrls.length > 0 ? (
+                  <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-xl p-3">
+                    {serviceForm.imageUrls.map((url, imgIdx) => (
+                      <div key={imgIdx} className="relative h-16 w-16 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
+                        <img src={url} alt={`service-gallery-${imgIdx}`} className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              imageUrls: prev.imageUrls.filter((_, i) => i !== imgIdx),
+                            }));
+                          }}
+                          className="absolute top-1 right-1 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#9A9AA0] italic ml-1">No gallery images uploaded yet.</p>
+                )}
               </div>
 
               {/* Dynamic Detail Sections list */}
@@ -1578,31 +1631,76 @@ export default function CatalogPage() {
                 />
               </div>
 
+              {catalogCategory === "food" && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-bold text-[#64646A] uppercase block ml-1">Food Type</span>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryForm((prev) => ({ ...prev, isVeg: true }))}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-semibold text-sm transition-all cursor-pointer ${
+                        deliveryForm.isVeg
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-xs"
+                          : "bg-[#F7F7F8] border-[#DEDEE2] text-[#64646A] hover:bg-[#EFEFF2]"
+                      }`}
+                    >
+                      <span className="h-3 w-3 rounded-full bg-emerald-500 border border-emerald-600 flex items-center justify-center">
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      </span>
+                      Veg
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryForm((prev) => ({ ...prev, isVeg: false }))}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-semibold text-sm transition-all cursor-pointer ${
+                        !deliveryForm.isVeg
+                          ? "bg-red-50 border-red-500 text-red-700 shadow-xs"
+                          : "bg-[#F7F7F8] border-[#DEDEE2] text-[#64646A] hover:bg-[#EFEFF2]"
+                      }`}
+                    >
+                      <span className="h-3 w-3 rounded-full bg-red-600 border border-red-700 flex items-center justify-center">
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      </span>
+                      Non-Veg
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Image URL + Upload */}
               <div>
-                <label htmlFor="delivery-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Product Image</label>
-                <label
-                  className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
-                  style={{ paddingTop: "12px", paddingBottom: "12px" }}
-                >
-                  <input
-                    id="delivery-cover-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        uploadFile(file, (url) => setDeliveryForm((prev) => ({ ...prev, imageUrl: url })), "deliveryCover");
-                      }
-                    }}
-                  />
-                  {uploadingField === "deliveryCover" ? "..." : "Upload Image"}
-                </label>
-                {deliveryForm.imageUrl && (
-                  <div className="mt-2 relative h-24 rounded-xl overflow-hidden border border-gray-200">
+                <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Product Image</label>
+                {deliveryForm.imageUrl ? (
+                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={deliveryForm.imageUrl} alt="Item" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryForm((prev) => ({ ...prev, imageUrl: "" }))}
+                      className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
+                ) : (
+                  <label
+                    htmlFor="delivery-cover-upload"
+                    className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
+                    style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                  >
+                    <input
+                      id="delivery-cover-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          uploadFile(file, (url) => setDeliveryForm((prev) => ({ ...prev, imageUrl: url })), "deliveryCover");
+                        }
+                      }}
+                    />
+                    {uploadingField === "deliveryCover" ? "..." : "Upload Image"}
+                  </label>
                 )}
               </div>
 
@@ -1676,11 +1774,11 @@ export default function CatalogPage() {
               </div>
 
               {/* Form buttons */}
-              <div className="flex gap-2.5 mt-4">
+              <div className="grid grid-cols-2 gap-3 mt-2">
                 <button
                   type="submit"
                   disabled={submitLoading}
-                  className="flex-1 bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full font-semibold active:scale-95 transition-all cursor-pointer shadow-sm text-center"
+                  className="bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full font-semibold active:scale-95 transition-all cursor-pointer text-center"
                   style={{ paddingTop: "12px", paddingBottom: "12px" }}
                 >
                   {submitLoading ? "..." : deliveryForm.id ? "Update Item" : "Create Item"}
@@ -1689,7 +1787,7 @@ export default function CatalogPage() {
                   type="button"
                   onClick={() => setDeliveryForm(initialDeliveryForm())}
                   className="bg-[#E9E9EC] hover:bg-[#DEDEE2] text-[#33343A] rounded-full font-semibold active:scale-95 transition-all cursor-pointer"
-                  style={{ paddingLeft: "32px", paddingRight: "32px", paddingTop: "12px", paddingBottom: "12px" }}
+                  style={{ paddingTop: "12px", paddingBottom: "12px" }}
                 >
                   Clear
                 </button>
@@ -1785,8 +1883,8 @@ export default function CatalogPage() {
                   rooms.map((room) => (
                     <div
                       key={room.id}
-                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs"
-                      style={{ padding: "24px", marginBottom: "16px" }}
+                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs p-4 sm:p-6"
+                      style={{ marginBottom: "16px" }}
                     >
                       <h3 className="text-base font-bold text-[#121212]">{room.title}</h3>
                       <p className="text-sm text-[#5F6064] mt-2 leading-relaxed">{room.description}</p>
@@ -1801,22 +1899,24 @@ export default function CatalogPage() {
                           </span>
                         ))}
                       </div>
-                      <p className="text-sm font-bold text-[#1A1A1A] mt-4">INR {room.price}</p>
-                      <div className="flex gap-2.5 mt-5 pt-4 border-t border-gray-100">
-                        <button
-                          onClick={() => handleEditRoom(room)}
-                          className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
-                          style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRoom(room.id, room.title)}
-                          className="rounded-full bg-[#F04646] hover:bg-red-600 text-white text-xs font-semibold transition-all cursor-pointer"
-                          style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
-                        >
-                          Delete
-                        </button>
+                      <div className="flex justify-between items-center mt-5 pt-4 border-t border-gray-100">
+                        <p className="text-sm font-bold text-[#1A1A1A]">INR {room.price}</p>
+                        <div className="flex gap-2.5">
+                          <button
+                            onClick={() => handleEditRoom(room)}
+                            className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
+                            style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRoom(room.id, room.title)}
+                            className="rounded-full bg-[#F04646] hover:bg-red-600 text-white text-xs font-semibold transition-all cursor-pointer"
+                            style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -1829,8 +1929,8 @@ export default function CatalogPage() {
                   services.map((service) => (
                     <div
                       key={service.id}
-                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs"
-                      style={{ padding: "24px", marginBottom: "16px" }}
+                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs p-4 sm:p-6"
+                      style={{ marginBottom: "16px" }}
                     >
                       <h3 className="text-base font-bold text-[#121212]">{service.title}</h3>
                       <p className="text-xs text-[#505055] mt-1.5 font-bold">Type: {service.type}</p>
@@ -1846,22 +1946,24 @@ export default function CatalogPage() {
                           </span>
                         ))}
                       </div>
-                      <p className="text-sm font-bold text-[#1A1A1A] mt-4">INR {service.price}</p>
-                      <div className="flex gap-2.5 mt-5 pt-4 border-t border-gray-100">
-                        <button
-                          onClick={() => handleEditService(service)}
-                          className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
-                          style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteService(service.id, service.title)}
-                          className="rounded-full bg-[#F04646] hover:bg-red-600 text-white text-xs font-semibold transition-all cursor-pointer"
-                          style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
-                        >
-                          Delete
-                        </button>
+                      <div className="flex justify-between items-center mt-5 pt-4 border-t border-gray-100">
+                        <p className="text-sm font-bold text-[#1A1A1A]">INR {service.price}</p>
+                        <div className="flex gap-2.5">
+                          <button
+                            onClick={() => handleEditService(service)}
+                            className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
+                            style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(service.id, service.title)}
+                            className="rounded-full bg-[#F04646] hover:bg-red-600 text-white text-xs font-semibold transition-all cursor-pointer"
+                            style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -1874,8 +1976,8 @@ export default function CatalogPage() {
                   filteredDeliveryItems.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs flex items-start"
-                      style={{ padding: "24px", marginBottom: "16px" }}
+                      className="rounded-[28px] bg-white border border-[#EBEBEF] shadow-xs flex items-start p-4 sm:p-6"
+                      style={{ marginBottom: "16px" }}
                     >
                       {item.imageUrl && (
                         <img
@@ -1886,12 +1988,33 @@ export default function CatalogPage() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-bold text-[#121212]">{item.name}</h3>
-                        <p className="text-xs text-[#64646A] mt-1.5 font-bold">
+                        <h3 className="text-base font-bold text-[#121212] flex items-center gap-2">
+                          {item.category === "FOOD" && (
+                            <span className={`inline-flex items-center justify-center h-4 w-4 border-2 shrink-0 ${item.isVeg ? "border-emerald-500" : "border-red-600"}`} style={{ padding: '2px' }}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${item.isVeg ? "bg-emerald-500" : "bg-red-600"}`} />
+                            </span>
+                          )}
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-[#64646A] mt-1.5 font-semibold">
                           Category: {item.category} | Qty: {item.availableQuantity} | {item.isAvailable ? "Available" : "Unavailable"}
                         </p>
-                        <p className="text-sm font-bold text-[#1A1A1A] mt-3">INR {item.price}</p>
-                        <div className="flex gap-2.5 mt-4 pt-3 border-t border-gray-50">
+                        {(item.servingInfo || item.pieces) && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {item.servingInfo && (
+                              <span className="bg-gray-50 border border-gray-100 text-[#5F6064] text-[10px] px-2.5 py-0.5 rounded-md">
+                                🍳 {item.servingInfo}
+                              </span>
+                            )}
+                            {item.pieces && (
+                              <span className="bg-gray-50 border border-gray-100 text-[#5F6064] text-[10px] px-2.5 py-0.5 rounded-md">
+                                🍕 {item.pieces}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-sm font-bold text-[#1A1A1A]">INR {item.price}</p>
                           <button
                             onClick={() => handleEditDelivery(item)}
                             className="rounded-full bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"

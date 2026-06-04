@@ -143,6 +143,8 @@ export interface DeliveryItem {
   category: "FOOD" | "GROCERY";
   grocerySection?: string | null;
   servingInfo?: string | null;
+  pieces?: string | null;
+  isVeg?: boolean;
   isAvailable: boolean;
   availableQuantity: number;
 }
