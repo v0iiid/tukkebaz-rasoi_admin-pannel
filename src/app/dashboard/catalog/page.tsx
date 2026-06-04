@@ -18,6 +18,15 @@ const formatDateTime = (value?: string | null): string => {
   });
 };
 
+const SERVICE_TYPE_LABELS: Record<string, string> = {
+  RENT_SCOOTY: "Rent Scooty",
+  DRONE_SHOOT: "Drone Shoot",
+  CAMPING: "Camping",
+  TREKKING_WITH_CAMPING: "Trekking with Camping",
+  CAB_AND_TAXI: "Cab and Taxi",
+  CAFE: "Cafe",
+};
+
 type CatalogCategory = "rooms" | "services" | "food" | "grocery";
 
 type RoomFormState = {
@@ -1185,7 +1194,7 @@ export default function CatalogPage() {
               <div className="mt-2">
                 <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Service Type</span>
                 <div className="flex flex-wrap gap-2 bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl p-2.5">
-                  {(serviceTypes.length > 0 ? serviceTypes : ["RENT_SCOOTY", "DRONE_SHOOT", "CAMPING", "TREKKING_WITH_CAMPING", "CAB_AND_TAXI", "CAFE"]).map((st) => (
+                  {(serviceTypes.length > 0 ? serviceTypes.filter(st => SERVICE_TYPE_LABELS[st]) : Object.keys(SERVICE_TYPE_LABELS)).map((st) => (
                     <button
                       key={st}
                       type="button"
@@ -1200,7 +1209,7 @@ export default function CatalogPage() {
                         color: serviceForm.type === st ? "#FFFFFF" : "#33343A",
                       }}
                     >
-                      {st.replace(/_/g, " ")}
+                      {SERVICE_TYPE_LABELS[st]}
                     </button>
                   ))}
                 </div>
@@ -1983,7 +1992,7 @@ export default function CatalogPage() {
                       style={{ marginBottom: "16px" }}
                     >
                       <h3 className="text-base font-bold text-[#121212]">{service.title}</h3>
-                      <p className="text-xs text-[#505055] mt-1.5 font-bold">Type: {service.type}</p>
+                      <p className="text-xs text-[#505055] mt-1.5 font-bold">Type: {SERVICE_TYPE_LABELS[service.type] || service.type.replace(/_/g, " ")}</p>
                       <p className="text-sm text-[#5F6064] mt-2 leading-relaxed">{service.description}</p>
                       <div className="flex flex-wrap gap-1.5 mt-4">
                         {service.requiredDocuments?.map((doc, idx) => (
