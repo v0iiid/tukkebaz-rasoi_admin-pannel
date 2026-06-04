@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, Room, Service, DeliveryItem, DeliveryOrder, ServiceType } from "@/lib/api";
 import { GlobalCache } from "@/lib/cache";
-import {  X } from "lucide-react";
+import { X, CheckCircle2, ShieldAlert, BadgeAlert } from "lucide-react";
 
 const formatDateTime = (value?: string | null): string => {
   if (!value) return "Not available";
@@ -71,6 +71,73 @@ type DeliveryItemFormState = {
 export default function CatalogPage() {
   const [catalogCategory, setCatalogCategory] = useState<CatalogCategory>("rooms");
   const [loading, setLoading] = useState(!GlobalCache.catalogRooms);
+
+  // Custom dialog modals state
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "info" | "warning";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: (() => void) | null;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
+  const [promptModal, setPromptModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    placeholder: string;
+    value: string;
+    onConfirm: ((value: string) => void) | null;
+  }>({
+    isOpen: false,
+    title: "",
+    placeholder: "",
+    value: "",
+    onConfirm: null,
+  });
+
+  const showAlert = (title: string, message: string, type: "success" | "error" | "info" | "warning" = "info") => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+    });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const showPrompt = (title: string, placeholder: string, onConfirm: (value: string) => void) => {
+    setPromptModal({
+      isOpen: true,
+      title,
+      placeholder,
+      value: "",
+      onConfirm,
+    });
+  };
   const [error, setError] = useState<string | null>(null);
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [adminDeliveryOrders, setAdminDeliveryOrders] = useState<DeliveryOrder[]>([]);
@@ -159,7 +226,7 @@ export default function CatalogPage() {
 
   const uploadHeroImageFile = async (file: File) => {
     if (homeIcons.length >= 5) {
-      alert("Maximum 5 images allowed.");
+      showAlert("Limit Exceeded", "Maximum 5 images allowed.", "warning");
       return;
     }
     setUploadingField("homeIconUpload");
@@ -182,8 +249,9 @@ export default function CatalogPage() {
             try { localStorage.setItem("hero_icons_cache", JSON.stringify(newIcons)); } catch {}
             return newIcons;
           });
+          showAlert("Success", "Home page icon uploaded successfully.", "success");
         } catch (err: any) {
-          alert(err.message || "Image upload failed.");
+          showAlert("Upload Failed", err.message || "Image upload failed.", "error");
         } finally {
           setUploadingField(null);
         }
@@ -396,26 +464,36 @@ export default function CatalogPage() {
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleDeleteRoom = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete room "${title}"?`)) {
-      try {
-        await api.deleteRoom(id);
-        fetchCatalog();
-      } catch (err: any) {
-        alert(err.message || "Failed to delete room.");
+  const handleDeleteRoom = (id: string, title: string) => {
+    showConfirm(
+      "Delete Room",
+      `Are you sure you want to delete room "${title}"?`,
+      async () => {
+        try {
+          await api.deleteRoom(id);
+          fetchCatalog();
+          showAlert("Success", `Room "${title}" deleted successfully.`, "success");
+        } catch (err: any) {
+          showAlert("Delete Failed", err.message || "Failed to delete room.", "error");
+        }
       }
-    }
+    );
   };
 
-  const handleDeleteService = async (id: string, title: string) => {
-    if (window.confirm(`Are you sure you want to delete service "${title}"?`)) {
-      try {
-        await api.deleteService(id);
-        fetchCatalog();
-      } catch (err: any) {
-        alert(err.message || "Failed to delete service.");
+  const handleDeleteService = (id: string, title: string) => {
+    showConfirm(
+      "Delete Service",
+      `Are you sure you want to delete service "${title}"?`,
+      async () => {
+        try {
+          await api.deleteService(id);
+          fetchCatalog();
+          showAlert("Success", `Service "${title}" deleted successfully.`, "success");
+        } catch (err: any) {
+          showAlert("Delete Failed", err.message || "Failed to delete service.", "error");
+        }
       }
-    }
+    );
   };
 
   const uploadFile = async (file: File, onDone: (url: string) => void, fieldId: string) => {
@@ -427,8 +505,9 @@ export default function CatalogPage() {
           const base64Str = (reader.result as string).split(",")[1];
           const res = await api.uploadImage(base64Str, file.name);
           onDone(res.url);
+          showAlert("Success", "Image uploaded successfully.", "success");
         } catch (err: any) {
-          alert(err.message || "Image upload failed.");
+          showAlert("Upload Failed", err.message || "Image upload failed.", "error");
         } finally {
           setUploadingField(null);
         }
@@ -464,13 +543,15 @@ export default function CatalogPage() {
 
       if (roomForm.id) {
         await api.updateRoom(roomForm.id, payload);
+        showAlert("Success", "Room updated successfully.", "success");
       } else {
         await api.createRoom(payload);
+        showAlert("Success", "Room created successfully.", "success");
       }
       setRoomForm(initialRoomForm());
       fetchCatalog();
     } catch (err: any) {
-      alert(err.message || "Failed to save room.");
+      showAlert("Save Failed", err.message || "Failed to save room.", "error");
     } finally {
       setSubmitLoading(false);
     }
@@ -508,13 +589,15 @@ export default function CatalogPage() {
 
       if (serviceForm.id) {
         await api.updateService(serviceForm.id, payload);
+        showAlert("Success", "Service updated successfully.", "success");
       } else {
         await api.createService(payload);
+        showAlert("Success", "Service created successfully.", "success");
       }
       setServiceForm(initialServiceForm());
       fetchCatalog();
     } catch (err: any) {
-      alert(err.message || "Failed to save service.");
+      showAlert("Save Failed", err.message || "Failed to save service.", "error");
     } finally {
       setSubmitLoading(false);
     }
@@ -539,13 +622,15 @@ export default function CatalogPage() {
 
       if (deliveryForm.id) {
         await api.updateKitchenItem(deliveryForm.id, payload);
+        showAlert("Success", "Item updated successfully.", "success");
       } else {
         await api.createKitchenItem(payload);
+        showAlert("Success", "Item created successfully.", "success");
       }
       setDeliveryForm(initialDeliveryForm());
       fetchCatalog();
     } catch (err: any) {
-      alert(err.message || "Failed to save item.");
+      showAlert("Save Failed", err.message || "Failed to save item.", "error");
     } finally {
       setSubmitLoading(false);
     }
@@ -565,7 +650,8 @@ export default function CatalogPage() {
   }, [deliveryItems, catalogCategory, foodSearchQuery]);
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in">
+    <>
+      <div className="flex flex-col gap-6 animate-fade-in">
 
       {/* Home Page Icons Manager */}
       <div
@@ -600,23 +686,28 @@ export default function CatalogPage() {
               <div key={img.public_id} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
                 <img src={img.url} alt={`icon-${idx}`} className="h-full w-full object-cover" />
                 <button
-                  onClick={async () => {
-                    if (confirm("Are you sure you want to delete this icon?")) {
-                      setUploadingField("homeIconUpload");
-                      try {
-                        await api.deleteHeroImage(img.public_id);
-                        setHomeIcons((prev) => {
-                          const newIcons = prev.filter((icon) => icon.public_id !== img.public_id);
-                          GlobalCache.catalogHomeIcons = newIcons;
-                          try { localStorage.setItem("hero_icons_cache", JSON.stringify(newIcons)); } catch {}
-                          return newIcons;
-                        });
-                      } catch (err: any) {
-                        alert(err.message || "Failed to delete image.");
-                      } finally {
-                        setUploadingField(null);
+                  onClick={() => {
+                    showConfirm(
+                      "Delete Icon",
+                      "Are you sure you want to delete this icon?",
+                      async () => {
+                        setUploadingField("homeIconUpload");
+                        try {
+                          await api.deleteHeroImage(img.public_id);
+                          setHomeIcons((prev) => {
+                            const newIcons = prev.filter((icon) => icon.public_id !== img.public_id);
+                            GlobalCache.catalogHomeIcons = newIcons;
+                            try { localStorage.setItem("hero_icons_cache", JSON.stringify(newIcons)); } catch {}
+                            return newIcons;
+                          });
+                          showAlert("Success", "Home page icon deleted successfully.", "success");
+                        } catch (err: any) {
+                          showAlert("Delete Failed", err.message || "Failed to delete image.", "error");
+                        } finally {
+                          setUploadingField(null);
+                        }
                       }
-                    }
+                    );
                   }}
                   className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black text-white p-1 rounded-full active:scale-90 transition-all cursor-pointer"
                 >
@@ -683,52 +774,72 @@ export default function CatalogPage() {
               <h2 className="text-xl font-bold text-[#171717]">
                 {roomForm.id ? "Edit Room" : "Add Room"}
               </h2>
-              <input
-                type="text"
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Room title"
-                value={roomForm.title}
-                onChange={(e) => setRoomForm((prev) => ({ ...prev, title: e.target.value }))}
-              />
-              <textarea
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Room description"
-                value={roomForm.description}
-                onChange={(e) => setRoomForm((prev) => ({ ...prev, description: e.target.value }))}
-              />
+              
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="room-title" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Room Title</label>
+                <input
+                  id="room-title"
+                  type="text"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Room title"
+                  value={roomForm.title}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="room-description" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Room Description</label>
+                <textarea
+                  id="room-description"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Room description"
+                  value={roomForm.description}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="number"
-                  required
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Price"
-                  value={roomForm.price}
-                  onChange={(e) => setRoomForm((prev) => ({ ...prev, price: e.target.value }))}
-                />
-                <input
-                  type="number"
-                  required
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Capacity"
-                  value={roomForm.capacity}
-                  onChange={(e) => setRoomForm((prev) => ({ ...prev, capacity: e.target.value }))}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="room-price" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Price (INR)</label>
+                  <input
+                    id="room-price"
+                    type="number"
+                    required
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Price"
+                    value={roomForm.price}
+                    onChange={(e) => setRoomForm((prev) => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="room-capacity" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Capacity (Guests)</label>
+                  <input
+                    id="room-capacity"
+                    type="number"
+                    required
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Capacity"
+                    value={roomForm.capacity}
+                    onChange={(e) => setRoomForm((prev) => ({ ...prev, capacity: e.target.value }))}
+                  />
+                </div>
               </div>
 
               {/* Cover image upload */}
               <div>
-                <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Main room image</span>
+                <label htmlFor="room-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Main Room Image</label>
                 <label
                   className="w-full bg-[#111111] hover:bg-black text-white rounded-[24px] text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
                   style={{ paddingTop: "12px", paddingBottom: "12px" }}
                 >
                   <input
+                    id="room-cover-upload"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -755,13 +866,18 @@ export default function CatalogPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const newType = window.prompt("Enter new photo area type:");
-                      if (newType) {
-                        setRoomForm((prev) => ({
-                          ...prev,
-                          roomPhotos: [...prev.roomPhotos, { type: newType, urls: [] }],
-                        }));
-                      }
+                      showPrompt(
+                        "Add Photo Type",
+                        "Enter new photo area type (e.g. Balcony, Private Kitchen):",
+                        (newType) => {
+                          if (newType.trim()) {
+                            setRoomForm((prev) => ({
+                              ...prev,
+                              roomPhotos: [...prev.roomPhotos, { type: newType.trim(), urls: [] }],
+                            }));
+                          }
+                        }
+                      );
                     }}
                     className="bg-[#111111] hover:bg-black text-white text-[11px] font-bold rounded-full active:scale-90 transition-all cursor-pointer"
                     style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "6px", paddingBottom: "6px" }}
@@ -778,8 +894,9 @@ export default function CatalogPage() {
                   >
                     <div className="flex items-end gap-3 w-full">
                       <div className="flex-1">
-                        <span className="text-[10px] font-bold text-[#9A9AA0] uppercase block mb-1">Photo type</span>
+                        <label htmlFor={`room-photo-type-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block mb-1">Photo type</label>
                         <input
+                          id={`room-photo-type-${idx}`}
                           type="text"
                           className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
                           style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
@@ -873,57 +990,80 @@ export default function CatalogPage() {
                 ))}
               </div>
 
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Address"
-                value={roomForm.address}
-                onChange={(e) => setRoomForm((prev) => ({ ...prev, address: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Owner phone number"
-                value={roomForm.ownerPhone}
-                onChange={(e) => setRoomForm((prev) => ({ ...prev, ownerPhone: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Tags (Free WiFi, Food Available, 2 Beds)"
-                value={roomForm.tags}
-                onChange={(e) => setRoomForm((prev) => ({ ...prev, tags: e.target.value }))}
-              />
-              <div className="grid grid-cols-2 gap-3" style={{ marginTop: "8px" }}>
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="room-address" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Address</label>
                 <input
-                  type="number"
-                  step="0.000001"
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  id="room-address"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Latitude"
-                  value={roomForm.latitude}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRoomForm((prev) => ({ ...prev, latitude: val }));
-                    syncMapMarker(val, roomForm.longitude);
-                  }}
+                  placeholder="Address"
+                  value={roomForm.address}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, address: e.target.value }))}
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="room-owner-phone" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Owner Phone Number</label>
                 <input
-                  type="number"
-                  step="0.000001"
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  id="room-owner-phone"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Longitude"
-                  value={roomForm.longitude}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRoomForm((prev) => ({ ...prev, longitude: val }));
-                    syncMapMarker(roomForm.latitude, val);
-                  }}
+                  placeholder="Owner phone number"
+                  value={roomForm.ownerPhone}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, ownerPhone: e.target.value }))}
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="room-tags" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Tags (comma-separated)</label>
+                <input
+                  id="room-tags"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Tags (Free WiFi, Food Available, 2 Beds)"
+                  value={roomForm.tags}
+                  onChange={(e) => setRoomForm((prev) => ({ ...prev, tags: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="room-latitude" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Latitude</label>
+                  <input
+                    id="room-latitude"
+                    type="number"
+                    step="0.000001"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Latitude"
+                    value={roomForm.latitude}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRoomForm((prev) => ({ ...prev, latitude: val }));
+                      syncMapMarker(val, roomForm.longitude);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="room-longitude" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Longitude</label>
+                  <input
+                    id="room-longitude"
+                    type="number"
+                    step="0.000001"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Longitude"
+                    value={roomForm.longitude}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRoomForm((prev) => ({ ...prev, longitude: val }));
+                      syncMapMarker(roomForm.latitude, val);
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Map Location Preview */}
@@ -969,32 +1109,47 @@ export default function CatalogPage() {
               <h2 className="text-xl font-bold text-[#171717]">
                 {serviceForm.id ? "Edit Service" : "Add Service"}
               </h2>
-              <input
-                type="text"
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Service title"
-                value={serviceForm.title}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, title: e.target.value }))}
-              />
-              <textarea
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Service description"
-                value={serviceForm.description}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, description: e.target.value }))}
-              />
-              <input
-                type="number"
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Price"
-                value={serviceForm.price}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, price: e.target.value }))}
-              />
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="service-title" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Service Title</label>
+                <input
+                  id="service-title"
+                  type="text"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Service title"
+                  value={serviceForm.title}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="service-description" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Service Description</label>
+                <textarea
+                  id="service-description"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Service description"
+                  value={serviceForm.description}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="service-price" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Price (INR)</label>
+                <input
+                  id="service-price"
+                  type="number"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Price"
+                  value={serviceForm.price}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, price: e.target.value }))}
+                />
+              </div>
 
               <div className="mt-2">
                 <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Service Type</span>
@@ -1022,12 +1177,13 @@ export default function CatalogPage() {
 
               {/* Cover Upload */}
               <div>
-                <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Cover Image</span>
+                <label htmlFor="service-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Cover Image</label>
                 <label
                   className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
                   style={{ paddingTop: "12px", paddingBottom: "12px" }}
                 >
                   <input
+                    id="service-cover-upload"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -1047,14 +1203,18 @@ export default function CatalogPage() {
                 )}
               </div>
 
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Gallery Image URLs (comma-separated)"
-                value={serviceForm.imageUrls}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, imageUrls: e.target.value }))}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="service-gallery" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Gallery Image URLs (comma-separated)</label>
+                <input
+                  id="service-gallery"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Gallery Image URLs (comma-separated)"
+                  value={serviceForm.imageUrls}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, imageUrls: e.target.value }))}
+                />
+              </div>
 
               {/* Dynamic Detail Sections list */}
               <div
@@ -1093,52 +1253,64 @@ export default function CatalogPage() {
                         Remove
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      required
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Section Title"
-                      value={sec.title}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.detailSections];
-                          list[idx].title = val;
-                          return { ...prev, detailSections: list };
-                        });
-                      }}
-                    />
-                    <textarea
-                      required
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111] min-h-[50px]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Section Body"
-                      value={sec.body}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.detailSections];
-                          list[idx].body = val;
-                          return { ...prev, detailSections: list };
-                        });
-                      }}
-                    />
-                    <input
-                      type="text"
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Bullet points (comma-separated)"
-                      value={sec.items}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.detailSections];
-                          list[idx].items = val;
-                          return { ...prev, detailSections: list };
-                        });
-                      }}
-                    />
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`sec-title-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Title</label>
+                      <input
+                        id={`sec-title-${idx}`}
+                        type="text"
+                        required
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Section Title"
+                        value={sec.title}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.detailSections];
+                            list[idx].title = val;
+                            return { ...prev, detailSections: list };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`sec-body-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Body</label>
+                      <textarea
+                        id={`sec-body-${idx}`}
+                        required
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111] min-h-[50px]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Section Body"
+                        value={sec.body}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.detailSections];
+                            list[idx].body = val;
+                            return { ...prev, detailSections: list };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`sec-items-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Bullet points (comma-separated)</label>
+                      <input
+                        id={`sec-items-${idx}`}
+                        type="text"
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Bullet points (comma-separated)"
+                        value={sec.items}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.detailSections];
+                            list[idx].items = val;
+                            return { ...prev, detailSections: list };
+                          });
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1180,117 +1352,156 @@ export default function CatalogPage() {
                         Remove
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      required
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Option Title"
-                      value={opt.title}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.activityOptions];
-                          list[idx].title = val;
-                          return { ...prev, activityOptions: list };
-                        });
-                      }}
-                    />
-                    <input
-                      type="text"
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Option Description"
-                      value={opt.description}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.activityOptions];
-                          list[idx].description = val;
-                          return { ...prev, activityOptions: list };
-                        });
-                      }}
-                    />
-                    <input
-                      type="number"
-                      required
-                      className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
-                      style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
-                      placeholder="Price per Guest"
-                      value={opt.pricePerGuest}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setServiceForm((prev) => {
-                          const list = [...prev.activityOptions];
-                          list[idx].pricePerGuest = val;
-                          return { ...prev, activityOptions: list };
-                        });
-                      }}
-                    />
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`opt-title-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Title</label>
+                      <input
+                        id={`opt-title-${idx}`}
+                        type="text"
+                        required
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Option Title"
+                        value={opt.title}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.activityOptions];
+                            list[idx].title = val;
+                            return { ...prev, activityOptions: list };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`opt-desc-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Description</label>
+                      <input
+                        id={`opt-desc-${idx}`}
+                        type="text"
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Option Description"
+                        value={opt.description}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.activityOptions];
+                            list[idx].description = val;
+                            return { ...prev, activityOptions: list };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`opt-price-${idx}`} className="text-[10px] font-bold text-[#9A9AA0] uppercase block">Price per Guest</label>
+                      <input
+                        id={`opt-price-${idx}`}
+                        type="number"
+                        required
+                        className="w-full bg-white border border-[#DEDEE2] rounded-lg text-xs text-[#111111]"
+                        style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px" }}
+                        placeholder="Price per Guest"
+                        value={opt.pricePerGuest}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setServiceForm((prev) => {
+                            const list = [...prev.activityOptions];
+                            list[idx].pricePerGuest = val;
+                            return { ...prev, activityOptions: list };
+                          });
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Required documents (comma-separated)"
-                value={serviceForm.requiredDocuments}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, requiredDocuments: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Pickup address"
-                value={serviceForm.pickupAddress}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, pickupAddress: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="Contact phone"
-                value={serviceForm.contactPhone}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px", marginTop: "8px" }}
-                placeholder="CTA label (e.g. Book experience)"
-                value={serviceForm.ctaLabel}
-                onChange={(e) => setServiceForm((prev) => ({ ...prev, ctaLabel: e.target.value }))}
-              />
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="service-required-docs" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Required documents (comma-separated)</label>
+                <input
+                  id="service-required-docs"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Required documents (comma-separated)"
+                  value={serviceForm.requiredDocuments}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, requiredDocuments: e.target.value }))}
+                />
+              </div>
 
-              <div className="grid grid-cols-2 gap-3" style={{ marginTop: "8px" }}>
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="service-pickup-address" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Pickup Address</label>
                 <input
-                  type="number"
-                  step="0.000001"
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  id="service-pickup-address"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Latitude"
-                  value={serviceForm.latitude}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setServiceForm((prev) => ({ ...prev, latitude: val }));
-                    syncMapMarker(val, serviceForm.longitude);
-                  }}
+                  placeholder="Pickup address"
+                  value={serviceForm.pickupAddress}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, pickupAddress: e.target.value }))}
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="service-contact-phone" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Contact Phone</label>
                 <input
-                  type="number"
-                  step="0.000001"
-                  className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  id="service-contact-phone"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Longitude"
-                  value={serviceForm.longitude}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setServiceForm((prev) => ({ ...prev, longitude: val }));
-                    syncMapMarker(serviceForm.latitude, val);
-                  }}
+                  placeholder="Contact phone"
+                  value={serviceForm.contactPhone}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label htmlFor="service-cta-label" className="text-xs font-bold text-[#64646A] uppercase block ml-1">CTA label (e.g. Book experience)</label>
+                <input
+                  id="service-cta-label"
+                  type="text"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="CTA label (e.g. Book experience)"
+                  value={serviceForm.ctaLabel}
+                  onChange={(e) => setServiceForm((prev) => ({ ...prev, ctaLabel: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="service-latitude" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Latitude</label>
+                  <input
+                    id="service-latitude"
+                    type="number"
+                    step="0.000001"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Latitude"
+                    value={serviceForm.latitude}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setServiceForm((prev) => ({ ...prev, latitude: val }));
+                      syncMapMarker(val, serviceForm.longitude);
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="service-longitude" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Longitude</label>
+                  <input
+                    id="service-longitude"
+                    type="number"
+                    step="0.000001"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Longitude"
+                    value={serviceForm.longitude}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setServiceForm((prev) => ({ ...prev, longitude: val }));
+                      syncMapMarker(serviceForm.latitude, val);
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Map Location Preview */}
@@ -1337,40 +1548,56 @@ export default function CatalogPage() {
                   ? `Edit ${catalogCategory === "food" ? "Food Item" : "Grocery Item"}`
                   : `Add ${catalogCategory === "food" ? "Food Item" : "Grocery Item"}`}
               </h2>
-              <input
-                type="text"
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Item name"
-                value={deliveryForm.name}
-                onChange={(e) => setDeliveryForm((prev) => ({ ...prev, name: e.target.value }))}
-              />
-              <textarea
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Item description"
-                value={deliveryForm.description}
-                onChange={(e) => setDeliveryForm((prev) => ({ ...prev, description: e.target.value }))}
-              />
-              <input
-                type="number"
-                required
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Price"
-                value={deliveryForm.price}
-                onChange={(e) => setDeliveryForm((prev) => ({ ...prev, price: e.target.value }))}
-              />
+              
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="delivery-name" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Item Name</label>
+                <input
+                  id="delivery-name"
+                  type="text"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Item name"
+                  value={deliveryForm.name}
+                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="delivery-description" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Item Description</label>
+                <textarea
+                  id="delivery-description"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Item description"
+                  value={deliveryForm.description}
+                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="delivery-price" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Price (INR)</label>
+                <input
+                  id="delivery-price"
+                  type="number"
+                  required
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Price"
+                  value={deliveryForm.price}
+                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, price: e.target.value }))}
+                />
+              </div>
 
               {/* Image URL + Upload */}
               <div>
-                <span className="text-[11px] font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Product Image</span>
+                <label htmlFor="delivery-cover-upload" className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Product Image</label>
                 <label
                   className="w-full bg-[#111111] hover:bg-black text-white rounded-xl text-sm font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xs"
                   style={{ paddingTop: "12px", paddingBottom: "12px" }}
                 >
                   <input
+                    id="delivery-cover-upload"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -1391,44 +1618,60 @@ export default function CatalogPage() {
               </div>
 
               {catalogCategory === "grocery" && (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="delivery-section" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Grocery section (e.g. Dairy / Fruits)</label>
+                  <input
+                    id="delivery-section"
+                    type="text"
+                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Grocery section (e.g. Dairy / Fruits)"
+                    value={deliveryForm.grocerySection}
+                    onChange={(e) => setDeliveryForm((prev) => ({ ...prev, grocerySection: e.target.value }))}
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="delivery-serving-info" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Serving info (e.g. Serves 1-2 / Net weight 100g)</label>
                 <input
+                  id="delivery-serving-info"
                   type="text"
                   className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Grocery section (e.g. Dairy / Fruits)"
-                  value={deliveryForm.grocerySection}
-                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, grocerySection: e.target.value }))}
+                  placeholder="Serving info (e.g. Serves 1-2 / Net weight 100g)"
+                  value={deliveryForm.servingInfo}
+                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, servingInfo: e.target.value }))}
                 />
-              )}
-
-              <input
-                type="text"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Serving info (e.g. Serves 1-2 / Net weight 100g)"
-                value={deliveryForm.servingInfo}
-                onChange={(e) => setDeliveryForm((prev) => ({ ...prev, servingInfo: e.target.value }))}
-              />
+              </div>
 
               {catalogCategory === "food" && (
-                <input
-                  type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                  placeholder="Serving pieces / portion details (e.g. 2 pieces)"
-                  value={deliveryForm.pieces}
-                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, pieces: e.target.value }))}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="delivery-pieces" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Serving pieces / portion details (e.g. 2 pieces)</label>
+                  <input
+                    id="delivery-pieces"
+                    type="text"
+                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                    placeholder="Serving pieces / portion details (e.g. 2 pieces)"
+                    value={deliveryForm.pieces}
+                    onChange={(e) => setDeliveryForm((prev) => ({ ...prev, pieces: e.target.value }))}
+                  />
+                </div>
               )}
 
-              <input
-                type="number"
-                className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
-                placeholder="Available quantity"
-                value={deliveryForm.availableQuantity}
-                onChange={(e) => setDeliveryForm((prev) => ({ ...prev, availableQuantity: e.target.value }))}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="delivery-quantity" className="text-xs font-bold text-[#64646A] uppercase block ml-1">Available quantity</label>
+                <input
+                  id="delivery-quantity"
+                  type="number"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+                  placeholder="Available quantity"
+                  value={deliveryForm.availableQuantity}
+                  onChange={(e) => setDeliveryForm((prev) => ({ ...prev, availableQuantity: e.target.value }))}
+                />
+              </div>
 
               <div className="mt-2 flex items-center gap-2 px-1">
                 <input
@@ -1681,5 +1924,99 @@ export default function CatalogPage() {
 
       </div>
     </div>
+
+    {/* Custom Dialog Modals */}
+    {alertModal.isOpen && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-4 text-center">
+          <div className={`mx-auto h-12 w-12 rounded-full flex items-center justify-center ${
+            alertModal.type === "success" ? "bg-emerald-50 text-emerald-500" :
+            alertModal.type === "error" ? "bg-red-50 text-red-500" :
+            alertModal.type === "warning" ? "bg-amber-50 text-amber-500" :
+            "bg-blue-50 text-blue-500"
+          }`}>
+            {alertModal.type === "success" ? <CheckCircle2 size={24} /> :
+             alertModal.type === "error" ? <BadgeAlert size={24} /> :
+             alertModal.type === "warning" ? <ShieldAlert size={24} /> :
+             <ShieldAlert size={24} className="text-blue-500" />}
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-[#111111]">{alertModal.title}</h3>
+            <p className="text-xs text-[#66666A] mt-2 leading-relaxed">{alertModal.message}</p>
+          </div>
+          <button
+            onClick={() => setAlertModal((prev) => ({ ...prev, isOpen: false }))}
+            className="w-full bg-[#111111] hover:bg-black text-white font-semibold py-3 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+          >
+            Okay
+          </button>
+        </div>
+      </div>
+    )}
+
+    {confirmModal.isOpen && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-4 text-center">
+          <div className="mx-auto h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+            <ShieldAlert size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-[#111111]">{confirmModal.title}</h3>
+            <p className="text-xs text-[#66666A] mt-2 leading-relaxed">{confirmModal.message}</p>
+          </div>
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+              className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-[#66666A] font-semibold py-2.5 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                if (confirmModal.onConfirm) confirmModal.onConfirm();
+              }}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {promptModal.isOpen && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-4">
+          <h3 className="text-base font-bold text-[#111111] text-center">{promptModal.title}</h3>
+          <input
+            type="text"
+            placeholder={promptModal.placeholder}
+            value={promptModal.value}
+            onChange={(e) => setPromptModal((prev) => ({ ...prev, value: e.target.value }))}
+            className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] px-4 py-2.5 input-glow placeholder:text-[#9A9AA0]"
+            autoFocus
+          />
+          <div className="flex gap-3 w-full mt-2">
+            <button
+              onClick={() => setPromptModal((prev) => ({ ...prev, isOpen: false }))}
+              className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-[#66666A] font-semibold py-2.5 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setPromptModal((prev) => ({ ...prev, isOpen: false }));
+                if (promptModal.onConfirm) promptModal.onConfirm(promptModal.value);
+              }}
+              className="flex-1 bg-[#111111] hover:bg-black text-white font-bold py-2.5 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 }

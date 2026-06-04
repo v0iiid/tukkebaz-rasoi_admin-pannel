@@ -17,6 +17,28 @@ export default function PartnersPage() {
 
   const [selectedPayout, setSelectedPayout] = useState<PartnerPayoutRequest | null>(null);
   const [utrInput, setUtrInput] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "info" | "warning";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
+  const showAlert = (title: string, message: string, type: "success" | "error" | "info" | "warning" = "info") => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+    });
+  };
+
   const [decisionModal, setDecisionModal] = useState<{
     isOpen: boolean;
     partnerId: string;
@@ -64,23 +86,23 @@ export default function PartnersPage() {
     if (!selectedPayout) return;
     const utr = utrInput.trim();
     if (!utr) {
-      alert("UTR reference number is required to clear payout.");
+      showAlert("Required Field", "UTR reference number is required to clear payout.", "warning");
       return;
     }
     if (!/^[A-Za-z0-9]{6,}$/.test(utr)) {
-      alert("Please enter a valid UTR reference number (at least 6 alphanumeric characters).");
+      showAlert("Invalid Entry", "Please enter a valid UTR reference number (at least 6 alphanumeric characters).", "warning");
       return;
     }
 
     try {
       setClearingId(selectedPayout.id);
       await api.clearPartnerPayout(selectedPayout.id, utr);
-      alert("Payout cleared and recorded successfully.");
+      showAlert("Success", "Payout cleared and recorded successfully.", "success");
       setSelectedPayout(null);
       setUtrInput("");
       loadData(false);
     } catch (err: any) {
-      alert(err.message || "Failed to clear payout.");
+      showAlert("Error", err.message || "Failed to clear payout.", "error");
     } finally {
       setClearingId(null);
     }
@@ -160,53 +182,54 @@ export default function PartnersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in pb-12">
-      {/* Page Header */}
-      <header className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-extrabold text-[#111111] tracking-tight">Partner & Payout Center</h2>
-          <p className="text-xs text-[#64646A] mt-1 font-medium">Verify driver documents, clear payout requests, and monitor partner accounts.</p>
-        </div>
-        <button
-          onClick={() => loadData(true)}
-          className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer shadow-xs"
-          style={{ paddingLeft: "20px", paddingRight: "20px", paddingTop: "10px", paddingBottom: "10px" }}
-        >
-          <RefreshCw size={12} />
-          <span>Refresh All</span>
-        </button>
-      </header>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center max-w-md mx-auto my-2 text-red-700 font-semibold">
-          {error}
-        </div>
-      )}
-
-      {/* 1. Pending Payout Requests Section */}
-      <section className="flex flex-col gap-4">
-        <h3 className="text-xl font-extrabold text-[#111111]">Pending Payouts</h3>
-        {payoutRequests.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center text-center bg-white rounded-[24px] border border-[#EBEBEF]"
-            style={{ padding: "48px" }}
-          >
-            <CheckCircle2 className="text-[#10B981] h-12 w-12" />
-            <h4 className="text-base font-bold text-[#111111] mt-3">All caught up!</h4>
-            <p className="text-xs text-[#66666A] mt-1">No delivery partners have requested payouts.</p>
+    <>
+      <div className="flex flex-col gap-8 animate-fade-in pb-12">
+        {/* Page Header */}
+        <header className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-extrabold text-[#111111] tracking-tight">Partner & Payout Center</h2>
+            <p className="text-xs text-[#64646A] mt-1 font-medium">Verify driver documents, clear payout requests, and monitor partner accounts.</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {payoutRequests.map((req) => (
-              <div
-                key={req.id}
-                className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200"
-                style={{ padding: "24px" }}
-              >
-                <div>
-                  <div className="flex justify-between items-start border-b border-[#F4F4F5] pb-4">
-                    <div>
-                      <h4 className="text-base font-bold text-[#111111]">{req.name}</h4>
+          <button
+            onClick={() => loadData(true)}
+            className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer shadow-xs"
+            style={{ paddingLeft: "20px", paddingRight: "20px", paddingTop: "10px", paddingBottom: "10px" }}
+          >
+            <RefreshCw size={12} />
+            <span>Refresh All</span>
+          </button>
+        </header>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center max-w-md mx-auto my-2 text-red-700 font-semibold">
+            {error}
+          </div>
+        )}
+
+        {/* 1. Pending Payout Requests Section */}
+        <section className="flex flex-col gap-4">
+          <h3 className="text-xl font-extrabold text-[#111111]">Pending Payouts</h3>
+          {payoutRequests.length === 0 ? (
+            <div
+              className="rounded-[24px] bg-white p-10 border border-[#EBEBEF] flex flex-col items-center justify-center text-center"
+              style={{ padding: "48px" }}
+            >
+              <CheckCircle2 className="text-[#9A9AA0] h-12 w-12" />
+              <h4 className="text-base font-bold text-[#646468] mt-3">All clear!</h4>
+              <p className="text-sm text-[#9A9AA0] mt-1">No pending payout requests from partners.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {payoutRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-200"
+                  style={{ padding: "24px" }}
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wider block">Partner Request</span>
+                      <h4 className="text-base font-bold text-[#111111] mt-1 truncate">{req.name}</h4>
                       <p className="text-xs text-[#66666A] mt-0.5">{req.phone}</p>
                     </div>
                     <div className="text-right">
@@ -230,17 +253,22 @@ export default function PartnersPage() {
                           type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(req.upiId!);
-                            alert("UPI ID copied to clipboard!");
+                            setCopiedId(req.id);
+                            setTimeout(() => setCopiedId(null), 1500);
                           }}
-                          className="text-[10px] font-bold bg-white border border-[#E9E9EC] hover:bg-gray-50 text-[#111111] rounded px-2 py-1 shrink-0 cursor-pointer active:scale-95 transition-all"
+                          className={`text-[10px] font-bold border rounded px-2 py-1 shrink-0 cursor-pointer active:scale-95 transition-all ${
+                            copiedId === req.id
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-600 font-extrabold"
+                              : "bg-white border-[#E9E9EC] hover:bg-gray-50 text-[#111111]"
+                          }`}
                         >
-                          Copy
+                          {copiedId === req.id ? "Copied!" : "Copy"}
                         </button>
                       )}
                     </div>
                     {req.upiId ? (
                       <p className="text-[10px] text-[#66666A] mt-2 font-medium leading-relaxed">
-                        Copy this UPI ID, transfer <strong>INR {req.unpaidAmount}</strong> to the partner via your payment app (GPay, PhonePe, Paytm, etc.), then click "Mark as Paid" and enter the UTR code to record this payout.
+                        Copy this UPI ID, transfer <strong>INR {req.unpaidAmount}</strong> to the partner via your payment app, then click "Clear Payout" and enter the UTR code to record this transaction.
                       </p>
                     ) : (
                       <div className="mt-2 bg-[#FFF5F5] border border-[#FECACA] rounded-xl flex flex-col gap-1 text-[11px] text-[#DC2626]" style={{ padding: "12px" }}>
@@ -248,295 +276,295 @@ export default function PartnersPage() {
                         <span className="text-gray-500">Contact the driver to request them to link a UPI ID inside their driver app profile:</span>
                         <div className="flex gap-2.5 mt-1">
                           <a href={`tel:${req.phone}`} className="text-[#111111] underline hover:text-black font-bold flex items-center gap-1">
-                            <Phone size={10} /> Call Driver
+                            <Phone size={10} />
+                            <span>Call Driver</span>
                           </a>
-                          <span>•</span>
-                          <a href={`https://wa.me/${req.phone.replace(/[^0-9]/g, "")}`} target="_blank" className="text-emerald-600 underline hover:text-emerald-700 font-bold flex items-center gap-1">
-                            <MessageSquare size={10} /> WhatsApp
+                          <a href={`https://wa.me/${req.phone}`} target="_blank" rel="noreferrer" className="text-[#25D366] underline hover:text-green-600 font-bold flex items-center gap-1">
+                            <MessageSquare size={10} />
+                            <span>WhatsApp</span>
                           </a>
                         </div>
                       </div>
                     )}
                   </div>
-                </div>
 
-                <button
-                  disabled={!req.upiId || clearingId === req.id}
-                  onClick={() => {
-                    setSelectedPayout(req);
-                    setUtrInput("");
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 rounded-full font-semibold active:scale-95 transition-all text-sm cursor-pointer ${
-                    req.upiId
-                      ? "bg-[#111111] hover:bg-black text-white"
-                      : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
-                  }`}
-                  style={{ paddingTop: "12px", paddingBottom: "12px" }}
-                >
-                  <CheckCircle2 size={16} />
-                  <span>{clearingId === req.id ? "Syncing..." : "Mark as Paid"}</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 2. Driver License Verification Reviews Section */}
-      <section className="flex flex-col gap-4">
-        <h3 className="text-xl font-extrabold text-[#111111]">Partner Verification</h3>
-        {pendingPartners.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center text-center bg-white rounded-[24px] border border-[#EBEBEF]"
-            style={{ padding: "48px" }}
-          >
-            <CheckCircle2 className="text-[#10B981] h-12 w-12" />
-            <h4 className="text-base font-bold text-[#111111] mt-3">No pending reviews</h4>
-            <p className="text-xs text-[#66666A] mt-1">All driver accounts are up to date and verified.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pendingPartners.map((partner) => (
-              <div
-                key={partner.id}
-                className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200"
-                style={{ padding: "24px" }}
-              >
-                <div>
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-base font-bold text-[#111111] truncate">{partner.name}</h4>
-                      <div className="mt-1 flex flex-col gap-1">
-                        <p className="text-xs text-[#66666A] font-medium">{partner.phone}</p>
-                        <p className="text-xs text-[#66666A] font-semibold">{partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
-                      </div>
-                      <div className="mt-2.5">
-                        <span
-                          className="rounded-full bg-[#FFF4D8] text-[#9A6200] border border-[#E5B800] text-[10px] font-bold tracking-wide uppercase px-2.5 py-1"
-                        >
-                          ⏳ PENDING REVIEW
-                        </span>
-                      </div>
-                    </div>
-                    {partner.profilePhotoUrl ? (
-                      <img
-                        src={partner.profilePhotoUrl}
-                        className="h-14 w-14 rounded-full object-cover shrink-0 ml-3 border border-[#EBEBEF]"
-                        alt=""
-                        onError={(e) => { (e.target as any).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-full bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center shrink-0 ml-3">
-                        <span className="text-[#66666A] font-bold text-[10px]">Driver</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Verification Documents Section */}
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {/* 1. Profile Photo */}
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Profile Photo</span>
-                      {partner.profilePhotoUrl ? (
-                        <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
-                          <img
-                            src={partner.profilePhotoUrl}
-                            className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
-                            alt="Profile Preview"
-                            onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
-                            onError={(e) => {
-                              (e.target as any).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-28 rounded-xl bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center text-center p-2">
-                          <span className="text-[10px] text-[#9A9AA0] font-medium leading-tight">No profile photo</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 2. Driver's License */}
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Driver License</span>
-                      {partner.dlUrl ? (
-                        <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
-                          <img
-                            src={partner.dlUrl}
-                            className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
-                            alt="Driver License Preview"
-                            onClick={() => window.open(partner.dlUrl!, "_blank")}
-                            onError={(e) => {
-                              (e.target as any).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-28 rounded-xl bg-[#FFF5F5] border border-[#FECACA] flex items-center justify-center text-center p-2">
-                          <span className="text-[10px] text-[#DC2626] font-medium leading-tight">No DL document</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Buttons to open in new tab */}
-                  <div className="mt-3 flex gap-2">
-                    {partner.profilePhotoUrl && (
-                      <button
-                        onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
-                        className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
-                      >
-                        <ExternalLink size={10} />
-                        <span>View Photo</span>
-                      </button>
-                    )}
-                    {partner.dlUrl && (
-                      <button
-                        onClick={() => window.open(partner.dlUrl!, "_blank")}
-                        className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
-                      >
-                        <ExternalLink size={10} />
-                        <span>View DL</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex gap-3">
                   <button
-                    disabled={verifyingId === partner.id}
-                    onClick={() => openDecisionModal(partner.id, partner.name, "APPROVED")}
-                    className="flex-1 bg-[#10B981] hover:bg-[#0E9F6E] text-white rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
-                    style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                    disabled={!req.upiId}
+                    onClick={() => {
+                      setSelectedPayout(req);
+                      setUtrInput("");
+                    }}
+                    className={`w-full font-bold py-3.5 rounded-full mt-2 transition-all active:scale-[0.98] cursor-pointer text-xs ${
+                      req.upiId
+                        ? "bg-[#111111] hover:bg-black text-white"
+                        : "bg-[#F4F4F5] text-[#9A9AA0] border border-[#E9E9EC] cursor-not-allowed"
+                    }`}
                   >
-                    Approve
-                  </button>
-                  <button
-                    disabled={verifyingId === partner.id}
-                    onClick={() => openDecisionModal(partner.id, partner.name, "REJECTED")}
-                    className="flex-1 bg-white hover:bg-[#FFF5F5] border border-[#FECACA] text-[#DC2626] rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
-                    style={{ paddingTop: "12px", paddingBottom: "12px" }}
-                  >
-                    Reject
+                    Clear Payout
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
 
-      {/* 3. Registered Drivers Directory Section */}
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <h3 className="text-xl font-extrabold text-[#111111]">All Partners</h3>
-          <div className="flex flex-wrap gap-1 bg-white p-1 rounded-full border border-[#EBEBEF] shadow-sm">
-            {(["ALL", "APPROVED", "INCOMPLETE", "REJECTED"] as const).map((filter) => (
-              <button
-                key={filter}
-                className={`rounded-full px-4 py-2 text-xs font-semibold cursor-pointer active:scale-95 transition-all ${
-                  partnerFilter === filter
-                    ? "bg-[#111111] text-white"
-                    : "text-[#66666A] hover:bg-gray-50 hover:text-[#111111]"
-                }`}
-                onClick={() => setPartnerFilter(filter)}
-              >
-                {filter === "ALL" ? "All" : filter.charAt(0) + filter.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {filteredPartners.length === 0 ? (
-          <div
-            className="rounded-[24px] bg-white p-10 border border-[#EBEBEF] flex flex-col items-center justify-center text-center"
-            style={{ padding: "48px" }}
-          >
-            <CheckCircle2 className="text-[#9A9AA0] h-12 w-12" />
-            <h4 className="text-base font-bold text-[#646468] mt-3">No partners match filter</h4>
-            <p className="text-sm text-[#9A9AA0] mt-1">There are no drivers matching the selected profile status.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPartners.map((partner) => {
-              const isApproved = partner.profileStatus === "APPROVED";
-              const isPending = partner.profileStatus === "PENDING";
-              const isIncomplete = !partner.profileStatus || partner.profileStatus === "INCOMPLETE" || partner.profileStatus === "NOT_SUBMITTED";
-              return (
+        {/* 2. Driver License Verification Reviews Section */}
+        <section className="flex flex-col gap-4">
+          <h3 className="text-xl font-extrabold text-[#111111]">Document Approvals</h3>
+          {pendingPartners.length === 0 ? (
+            <div
+              className="rounded-[24px] bg-white p-10 border border-[#EBEBEF] flex flex-col items-center justify-center text-center"
+              style={{ padding: "48px" }}
+            >
+              <CheckCircle2 className="text-[#9A9AA0] h-12 w-12" />
+              <h4 className="text-base font-bold text-[#646468] mt-3">No pending reviews</h4>
+              <p className="text-xs text-[#66666A] mt-1">All driver accounts are up to date and verified.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pendingPartners.map((partner) => (
                 <div
                   key={partner.id}
-                  className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-200"
+                  className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-200"
                   style={{ padding: "24px" }}
                 >
                   <div>
-                    <div className="flex justify-between items-start gap-4">
+                    <div className="flex justify-between items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <h4 className="text-base font-bold text-[#111111] truncate">{partner.name}</h4>
-                        <p className="text-xs text-[#66666A] mt-1 font-medium">{partner.phone} • {partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
+                        <div className="mt-1 flex flex-col gap-1">
+                          <p className="text-xs text-[#66666A] font-medium">{partner.phone}</p>
+                          <p className="text-xs text-[#66666A] font-semibold">{partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
+                        </div>
+                        <div className="mt-2.5">
+                          <span
+                            className="rounded-full bg-[#FFF4D8] text-[#9A6200] border border-[#E5B800] text-[10px] font-bold tracking-wide uppercase px-2.5 py-1"
+                          >
+                            ⏳ PENDING REVIEW
+                          </span>
+                        </div>
                       </div>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full text-[10px] font-bold tracking-wide uppercase shrink-0`}
-                        style={{
-                          paddingLeft: "10px",
-                          paddingRight: "10px",
-                          paddingTop: "4px",
-                          paddingBottom: "4px",
-                          backgroundColor: isApproved
-                            ? "#E5F4E3"
-                            : isPending
-                            ? "#FFF3E0"
-                            : isIncomplete
-                            ? "#FFF4D8"
-                            : "#FDECEA",
-                          color: isApproved
-                            ? "#1F7A1F"
-                            : isPending
-                            ? "#E65100"
-                            : isIncomplete
-                            ? "#9A6200"
-                            : "#B71C1C"
-                        }}
-                      >
-                        {isApproved ? (
-                          <BadgeCheck size={12} />
-                        ) : isPending ? (
-                          <ShieldAlert size={12} />
-                        ) : isIncomplete ? (
-                          <ShieldAlert size={12} />
-                        ) : (
-                          <BadgeAlert size={12} />
-                        )}
-                        {partner.profileStatus || "INCOMPLETE"}
-                      </span>
+                      {partner.profilePhotoUrl ? (
+                        <img
+                          src={partner.profilePhotoUrl}
+                          className="h-14 w-14 rounded-full object-cover shrink-0 ml-3 border border-[#EBEBEF]"
+                          alt=""
+                          onError={(e) => { (e.target as any).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-full bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center shrink-0 ml-3">
+                          <span className="text-[#66666A] font-bold text-[10px]">Driver</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-[#66666A]">Linked UPI ID:</span>
-                        <span className="font-semibold text-[#111111] font-mono truncate max-w-[65%]">{partner.upiId || "None"}</span>
+                    {/* Verification Documents Section */}
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      {/* 1. Profile Photo */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Profile Photo</span>
+                        {partner.profilePhotoUrl ? (
+                          <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                            <img
+                              src={partner.profilePhotoUrl}
+                              className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                              alt="Profile Preview"
+                              onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
+                              onError={(e) => {
+                                (e.target as any).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-28 rounded-xl bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center text-center p-2">
+                            <span className="text-[10px] text-[#9A9AA0] font-medium leading-tight">No profile photo</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-[#66666A]">Unpaid Balance:</span>
-                        <span className="font-bold text-[#ED7D4B]">INR {partner.unpaidAmount || 0}</span>
+
+                      {/* 2. Driver's License */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Driver License</span>
+                        {partner.dlUrl ? (
+                          <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                            <img
+                              src={partner.dlUrl}
+                              className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                              alt="Driver License Preview"
+                              onClick={() => window.open(partner.dlUrl!, "_blank")}
+                              onError={(e) => {
+                                (e.target as any).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-28 rounded-xl bg-[#FFF5F5] border border-[#FECACA] flex items-center justify-center text-center p-2">
+                            <span className="text-[10px] text-[#DC2626] font-medium leading-tight">No DL document</span>
+                          </div>
+                        )}
                       </div>
+                    </div>
+
+                    {/* Buttons to open in new tab */}
+                    <div className="mt-3 flex gap-2">
+                      {partner.profilePhotoUrl && (
+                        <button
+                          onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
+                          className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
+                        >
+                          <ExternalLink size={10} />
+                          <span>View Photo</span>
+                        </button>
+                      )}
+                      {partner.dlUrl && (
+                        <button
+                          onClick={() => window.open(partner.dlUrl!, "_blank")}
+                          className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
+                        >
+                          <ExternalLink size={10} />
+                          <span>View DL</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                    <span className="text-xs text-[#66666A]">Availability Status</span>
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${partner.isAvailable ? "text-[#10B981]" : "text-[#9A9AA0]"}`}>
-                      <span className={`h-2 w-2 rounded-full ${partner.isAvailable ? "bg-[#10B981] animate-pulse" : "bg-[#9A9AA0]"}`} />
-                      {partner.isAvailable ? "On Duty" : "Offline"}
-                    </span>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      disabled={verifyingId === partner.id}
+                      onClick={() => openDecisionModal(partner.id, partner.name, "APPROVED")}
+                      className="flex-1 bg-[#10B981] hover:bg-[#0E9F6E] text-white rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                      style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      disabled={verifyingId === partner.id}
+                      onClick={() => openDecisionModal(partner.id, partner.name, "REJECTED")}
+                      className="flex-1 bg-white hover:bg-[#FFF5F5] border border-[#FECACA] text-[#DC2626] rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                      style={{ paddingTop: "12px", paddingBottom: "12px" }}
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* 3. Registered Drivers Directory Section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+            <h3 className="text-xl font-extrabold text-[#111111]">All Partners</h3>
+            <div className="flex flex-wrap gap-1 bg-white p-1 rounded-full border border-[#EBEBEF] shadow-sm">
+              {(["ALL", "APPROVED", "INCOMPLETE", "REJECTED"] as const).map((filter) => (
+                <button
+                  key={filter}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold cursor-pointer active:scale-95 transition-all ${
+                    partnerFilter === filter
+                      ? "bg-[#111111] text-white"
+                      : "text-[#66666A] hover:bg-gray-50 hover:text-[#111111]"
+                  }`}
+                  onClick={() => setPartnerFilter(filter)}
+                >
+                  {filter === "ALL" ? "All" : filter.charAt(0) + filter.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
-      </section>
+
+          {filteredPartners.length === 0 ? (
+            <div
+              className="rounded-[24px] bg-white p-10 border border-[#EBEBEF] flex flex-col items-center justify-center text-center"
+              style={{ padding: "48px" }}
+            >
+              <CheckCircle2 className="text-[#9A9AA0] h-12 w-12" />
+              <h4 className="text-base font-bold text-[#646468] mt-3">No partners match filter</h4>
+              <p className="text-sm text-[#9A9AA0] mt-1">There are no drivers matching the selected profile status.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPartners.map((partner) => {
+                const isApproved = partner.profileStatus === "APPROVED";
+                const isPending = partner.profileStatus === "PENDING";
+                const isIncomplete = !partner.profileStatus || partner.profileStatus === "INCOMPLETE" || partner.profileStatus === "NOT_SUBMITTED";
+                return (
+                  <div
+                    key={partner.id}
+                    className="rounded-[24px] bg-white border border-[#EBEBEF] shadow-xs flex flex-col justify-between hover:shadow-md transition-all duration-200"
+                    style={{ padding: "24px" }}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base font-bold text-[#111111] truncate">{partner.name}</h4>
+                          <p className="text-xs text-[#66666A] mt-1 font-medium">{partner.phone} • {partner.vehicleType.toLowerCase().replace(/_/g, " ")}</p>
+                        </div>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full text-[10px] font-bold tracking-wide uppercase shrink-0`}
+                          style={{
+                            paddingLeft: "10px",
+                            paddingRight: "10px",
+                            paddingTop: "4px",
+                            paddingBottom: "4px",
+                            backgroundColor: isApproved
+                              ? "#E5F4E3"
+                              : isPending
+                              ? "#FFF3E0"
+                              : isIncomplete
+                              ? "#FFF4D8"
+                              : "#FDECEA",
+                            color: isApproved
+                              ? "#1F7A1F"
+                              : isPending
+                              ? "#E65100"
+                              : isIncomplete
+                              ? "#9A6200"
+                              : "#B71C1C"
+                          }}
+                        >
+                          {isApproved ? (
+                            <BadgeCheck size={12} />
+                          ) : isPending ? (
+                            <ShieldAlert size={12} />
+                          ) : isIncomplete ? (
+                            <ShieldAlert size={12} />
+                          ) : (
+                            <BadgeAlert size={12} />
+                          )}
+                          {partner.profileStatus || "INCOMPLETE"}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-[#66666A]">Linked UPI ID:</span>
+                          <span className="font-semibold text-[#111111] font-mono truncate max-w-[65%]">{partner.upiId || "None"}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-[#66666A]">Unpaid Balance:</span>
+                          <span className="font-bold text-[#ED7D4B]">INR {partner.unpaidAmount || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                      <span className="text-xs text-[#66666A]">Availability Status</span>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${partner.isAvailable ? "text-[#10B981]" : "text-[#9A9AA0]"}`}>
+                        <span className={`h-2 w-2 rounded-full ${partner.isAvailable ? "bg-[#10B981] animate-pulse" : "bg-[#9A9AA0]"}`} />
+                        {partner.isAvailable ? "On Duty" : "Offline"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+
       {selectedPayout && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 animate-fade-in shadow-xl flex flex-col gap-4">
             <div className="flex justify-between items-start border-b border-[#F4F4F5] pb-4">
               <div>
@@ -573,18 +601,20 @@ export default function PartnersPage() {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(selectedPayout.upiId!);
-                    alert("UPI ID copied!");
+                    setCopiedId("payout-modal");
+                    setTimeout(() => setCopiedId(null), 1500);
                   }}
                   className="text-[10px] font-bold text-[#ED7D4B] hover:underline shrink-0 cursor-pointer"
                 >
-                  COPY
+                  {copiedId === "payout-modal" ? "COPIED!" : "COPY"}
                 </button>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 mt-4">
-              <label className="text-xs font-bold text-[#111111] pl-1">UTR Reference Number</label>
+              <label htmlFor="utr-input" className="text-xs font-bold text-[#111111] pl-1">UTR Reference Number</label>
               <input 
+                id="utr-input"
                 type="text"
                 placeholder="Enter transaction ID (UTR)"
                 className="w-full bg-[#F4F4F5] border border-[#EBEBEF] rounded-xl text-sm text-[#111111] px-4 py-3 focus:outline-none focus:border-[#ED7D4B] focus:bg-white transition-colors"
@@ -605,7 +635,7 @@ export default function PartnersPage() {
       )}
 
       {decisionModal.isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-5 text-center">
             {decisionModal.status === "idle" && (
               <>
@@ -685,6 +715,34 @@ export default function PartnersPage() {
           </div>
         </div>
       )}
-    </div>
+
+      {alertModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-4 text-center">
+            <div className={`mx-auto h-12 w-12 rounded-full flex items-center justify-center ${
+              alertModal.type === "success" ? "bg-emerald-50 text-emerald-500" :
+              alertModal.type === "error" ? "bg-red-50 text-red-500" :
+              alertModal.type === "warning" ? "bg-amber-50 text-amber-500" :
+              "bg-blue-50 text-blue-500"
+            }`}>
+              {alertModal.type === "success" ? <CheckCircle2 size={24} /> :
+               alertModal.type === "error" ? <BadgeAlert size={24} /> :
+               alertModal.type === "warning" ? <ShieldAlert size={24} /> :
+               <ShieldAlert size={24} className="text-blue-500" />}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-[#111111]">{alertModal.title}</h3>
+              <p className="text-xs text-[#66666A] mt-2 leading-relaxed">{alertModal.message}</p>
+            </div>
+            <button
+              onClick={() => setAlertModal((prev) => ({ ...prev, isOpen: false }))}
+              className="w-full bg-[#111111] hover:bg-black text-white font-semibold py-3 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
