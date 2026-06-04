@@ -700,7 +700,7 @@ export default function CatalogPage() {
           {homeIcons
             .filter((img) => img?.url && img?.public_id)
             .map((img, idx) => (
-              <div key={img.public_id} className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
+              <div key={img.public_id} className="relative h-20 w-20 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 group">
                 <img src={img.url} alt={`icon-${idx}`} className="h-full w-full object-cover" />
                 <button
                   onClick={() => {
@@ -797,7 +797,7 @@ export default function CatalogPage() {
                   id="room-title"
                   type="text"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Room title"
                   value={roomForm.title}
@@ -810,7 +810,7 @@ export default function CatalogPage() {
                 <textarea
                   id="room-description"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Room description"
                   value={roomForm.description}
@@ -825,7 +825,7 @@ export default function CatalogPage() {
                     id="room-price"
                     type="number"
                     required
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Price"
                     value={roomForm.price}
@@ -838,7 +838,7 @@ export default function CatalogPage() {
                     id="room-capacity"
                     type="number"
                     required
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Capacity"
                     value={roomForm.capacity}
@@ -851,7 +851,7 @@ export default function CatalogPage() {
               <div>
                 <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Main Room Image</label>
                 {roomForm.imageUrl ? (
-                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={roomForm.imageUrl} alt="Room cover" className="h-full w-full object-cover" />
                     <button
                       type="button"
@@ -968,9 +968,9 @@ export default function CatalogPage() {
                     {photoGroup.urls.length > 0 && (
                       <div>
                         <span className="text-[10px] font-bold text-[#9A9AA0] uppercase block mb-1.5 ml-1">Uploaded images</span>
-                        <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-xl" style={{ padding: "12px" }}>
+                        <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-lg" style={{ padding: "12px" }}>
                           {photoGroup.urls.map((url, imgIdx) => (
-                            <div key={imgIdx} className="relative h-16 w-16 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
+                            <div key={imgIdx} className="relative h-16 w-16 rounded-lg overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
                               <img src={url} alt={`room-photo-${imgIdx}`} className="h-full w-full object-cover" />
                               <button
                                 type="button"
@@ -1013,7 +1013,7 @@ export default function CatalogPage() {
                 <input
                   id="room-address"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Address"
                   value={roomForm.address}
@@ -1026,7 +1026,7 @@ export default function CatalogPage() {
                 <input
                   id="room-map-url"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="e.g. https://maps.app.goo.gl/..."
                   value={roomForm.googleMapUrl}
@@ -1039,7 +1039,7 @@ export default function CatalogPage() {
                 <input
                   id="room-owner-phone"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Owner phone number"
                   value={roomForm.ownerPhone}
@@ -1052,7 +1052,7 @@ export default function CatalogPage() {
                 <input
                   id="room-tags"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Tags (Free WiFi, Food Available, 2 Beds)"
                   value={roomForm.tags}
@@ -1067,7 +1067,7 @@ export default function CatalogPage() {
                     id="room-latitude"
                     type="number"
                     step="0.000001"
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Latitude"
                     value={roomForm.latitude}
@@ -1084,7 +1084,7 @@ export default function CatalogPage() {
                     id="room-longitude"
                     type="number"
                     step="0.000001"
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Longitude"
                     value={roomForm.longitude}
@@ -1147,7 +1147,7 @@ export default function CatalogPage() {
                   id="service-title"
                   type="text"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Service title"
                   value={serviceForm.title}
@@ -1160,7 +1160,7 @@ export default function CatalogPage() {
                 <textarea
                   id="service-description"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow min-h-[92px] placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Service description"
                   value={serviceForm.description}
@@ -1174,7 +1174,7 @@ export default function CatalogPage() {
                   id="service-price"
                   type="number"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Price"
                   value={serviceForm.price}
@@ -1210,7 +1210,7 @@ export default function CatalogPage() {
               <div>
                 <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Cover Image</label>
                 {serviceForm.imageUrl ? (
-                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={serviceForm.imageUrl} alt="Service cover" className="h-full w-full object-cover" />
                     <button
                       type="button"
@@ -1270,9 +1270,9 @@ export default function CatalogPage() {
                 </div>
 
                 {serviceForm.imageUrls.length > 0 ? (
-                  <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-xl p-3">
+                  <div className="flex flex-wrap gap-2.5 bg-white border border-[#EBEBEF] rounded-lg p-3">
                     {serviceForm.imageUrls.map((url, imgIdx) => (
-                      <div key={imgIdx} className="relative h-16 w-16 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
+                      <div key={imgIdx} className="relative h-16 w-16 rounded-lg overflow-hidden border border-[#EBEBEF] shrink-0 group shadow-xs">
                         <img src={url} alt={`service-gallery-${imgIdx}`} className="h-full w-full object-cover" />
                         <button
                           type="button"
@@ -1498,7 +1498,7 @@ export default function CatalogPage() {
                 <input
                   id="service-required-docs"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Required documents (comma-separated)"
                   value={serviceForm.requiredDocuments}
@@ -1511,7 +1511,7 @@ export default function CatalogPage() {
                 <input
                   id="service-pickup-address"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Pickup address"
                   value={serviceForm.pickupAddress}
@@ -1524,7 +1524,7 @@ export default function CatalogPage() {
                 <input
                   id="service-map-url"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="e.g. https://maps.app.goo.gl/..."
                   value={serviceForm.googleMapUrl}
@@ -1537,7 +1537,7 @@ export default function CatalogPage() {
                 <input
                   id="service-contact-phone"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Contact phone"
                   value={serviceForm.contactPhone}
@@ -1550,7 +1550,7 @@ export default function CatalogPage() {
                 <input
                   id="service-cta-label"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="CTA label (e.g. Book experience)"
                   value={serviceForm.ctaLabel}
@@ -1565,7 +1565,7 @@ export default function CatalogPage() {
                     id="service-latitude"
                     type="number"
                     step="0.000001"
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Latitude"
                     value={serviceForm.latitude}
@@ -1582,7 +1582,7 @@ export default function CatalogPage() {
                     id="service-longitude"
                     type="number"
                     step="0.000001"
-                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Longitude"
                     value={serviceForm.longitude}
@@ -1646,7 +1646,7 @@ export default function CatalogPage() {
                   id="delivery-name"
                   type="text"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Item name"
                   value={deliveryForm.name}
@@ -1661,7 +1661,7 @@ export default function CatalogPage() {
                   id="delivery-price"
                   type="number"
                   required
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Price"
                   value={deliveryForm.price}
@@ -1709,7 +1709,7 @@ export default function CatalogPage() {
               <div>
                 <label className="text-xs font-bold text-[#64646A] uppercase block mb-1.5 ml-1">Product Image</label>
                 {deliveryForm.imageUrl ? (
-                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-[#EBEBEF] shrink-0 shadow-xs">
                     <img src={deliveryForm.imageUrl} alt="Item" className="h-full w-full object-cover" />
                     <button
                       type="button"
@@ -1748,7 +1748,7 @@ export default function CatalogPage() {
                   <input
                     id="delivery-section"
                     type="text"
-                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Grocery section (e.g. Dairy / Fruits)"
                     value={deliveryForm.grocerySection}
@@ -1762,7 +1762,7 @@ export default function CatalogPage() {
                 <input
                   id="delivery-serving-info"
                   type="text"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Serving info (e.g. Serves 1-2 / Net weight 100g)"
                   value={deliveryForm.servingInfo}
@@ -1776,7 +1776,7 @@ export default function CatalogPage() {
                   <input
                     id="delivery-pieces"
                     type="text"
-                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                    className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                     style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                     placeholder="Serving pieces / portion details (e.g. 2 pieces)"
                     value={deliveryForm.pieces}
@@ -1790,7 +1790,7 @@ export default function CatalogPage() {
                 <input
                   id="delivery-quantity"
                   type="number"
-                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
+                  className="w-full bg-[#F7F7F8] border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
                   style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
                   placeholder="Available quantity"
                   value={deliveryForm.availableQuantity}
@@ -1854,7 +1854,7 @@ export default function CatalogPage() {
                 placeholder={`Search ${catalogCategory === "food" ? "food" : "grocery"} items...`}
                 value={foodSearchQuery}
                 onChange={(e) => setFoodSearchQuery(e.target.value)}
-                className="w-full bg-white border border-[#DEDEE2] rounded-xl text-sm text-[#111111] input-glow"
+                className="w-full bg-white border border-[#DEDEE2] rounded-lg text-sm text-[#111111] input-glow"
                 style={{ paddingLeft: "16px", paddingRight: "40px", paddingTop: "12px", paddingBottom: "12px" }}
               />
               {foodSearchQuery && (
@@ -2045,7 +2045,7 @@ export default function CatalogPage() {
                         <img
                           src={item.imageUrl}
                           alt={item.name}
-                          className="h-16 w-16 rounded-2xl object-cover shrink-0 border border-[#EBEBEF]"
+                          className="h-16 w-16 rounded-xl object-cover shrink-0 border border-[#EBEBEF]"
                           style={{ marginRight: "16px" }}
                         />
                       )}
