@@ -17,6 +17,21 @@ export default function PartnersPage() {
 
   const [selectedPayout, setSelectedPayout] = useState<PartnerPayoutRequest | null>(null);
   const [utrInput, setUtrInput] = useState("");
+  const [decisionModal, setDecisionModal] = useState<{
+    isOpen: boolean;
+    partnerId: string;
+    partnerName: string;
+    action: "APPROVED" | "REJECTED" | null;
+    status: "idle" | "loading" | "success" | "error";
+    message: string;
+  }>({
+    isOpen: false,
+    partnerId: "",
+    partnerName: "",
+    action: null,
+    status: "idle",
+    message: "",
+  });
 
   const loadData = async (showPulse = !GlobalCache.partnersAll) => {
     try {
@@ -71,19 +86,43 @@ export default function PartnersPage() {
     }
   };
 
-  const handleVerifyPartner = async (partnerId: string, name: string, status: "APPROVED" | "REJECTED") => {
-    const confirm = window.confirm(
-      `Are you sure you want to ${status.toLowerCase()} ${name}'s Driver License?`
-    );
-    if (!confirm) return;
+  const openDecisionModal = (partnerId: string, name: string, action: "APPROVED" | "REJECTED") => {
+    setDecisionModal({
+      isOpen: true,
+      partnerId,
+      partnerName: name,
+      action,
+      status: "idle",
+      message: "",
+    });
+  };
+
+  const executeVerifyPartner = async () => {
+    const { partnerId, action } = decisionModal;
+    if (!partnerId || !action) return;
+
+    setDecisionModal((prev) => ({ ...prev, status: "loading" }));
+    setVerifyingId(partnerId);
 
     try {
-      setVerifyingId(partnerId);
-      const res = await api.verifyPartner(partnerId, status);
-      alert(res.message || `Partner verified as ${status}.`);
+      const res = await api.verifyPartner(partnerId, action);
+      setDecisionModal((prev) => ({
+        ...prev,
+        status: "success",
+        message: res.message || `Partner verified as ${action === "APPROVED" ? "Approved" : "Rejected"}.`,
+      }));
       loadData(false);
+      
+      // Auto close after 1.5 seconds
+      setTimeout(() => {
+        setDecisionModal((prev) => ({ ...prev, isOpen: false }));
+      }, 1500);
     } catch (err: any) {
-      alert(err.message || "Failed to verify partner.");
+      setDecisionModal((prev) => ({
+        ...prev,
+        status: "error",
+        message: err.message || "Failed to update partner verification status.",
+      }));
     } finally {
       setVerifyingId(null);
     }
@@ -293,43 +332,80 @@ export default function PartnersPage() {
                     )}
                   </div>
 
-                  {partner.dlUrl ? (
-                    <div className="mt-4 flex flex-col gap-2">
-                      <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
-                        <img
-                          src={partner.dlUrl}
-                          className="w-full h-40 object-cover cursor-zoom-in hover:scale-102 transition-all duration-300 rounded-xl"
-                          alt="Driver License"
-                          onClick={() => window.open(partner.dlUrl!, "_blank")}
-                          onError={(e) => {
-                            (e.target as any).style.display = 'none';
-                          }}
-                        />
-                      </div>
+                  {/* Verification Documents Section */}
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {/* 1. Profile Photo */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Profile Photo</span>
+                      {partner.profilePhotoUrl ? (
+                        <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                          <img
+                            src={partner.profilePhotoUrl}
+                            className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                            alt="Profile Preview"
+                            onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
+                            onError={(e) => {
+                              (e.target as any).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-28 rounded-xl bg-[#F4F4F5] border border-[#EBEBEF] flex items-center justify-center text-center p-2">
+                          <span className="text-[10px] text-[#9A9AA0] font-medium leading-tight">No profile photo</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Driver's License */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold text-[#66666A] uppercase tracking-wide">Driver License</span>
+                      {partner.dlUrl ? (
+                        <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                          <img
+                            src={partner.dlUrl}
+                            className="w-full h-28 object-cover cursor-zoom-in hover:scale-105 transition-all duration-300 rounded-xl"
+                            alt="Driver License Preview"
+                            onClick={() => window.open(partner.dlUrl!, "_blank")}
+                            onError={(e) => {
+                              (e.target as any).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-28 rounded-xl bg-[#FFF5F5] border border-[#FECACA] flex items-center justify-center text-center p-2">
+                          <span className="text-[10px] text-[#DC2626] font-medium leading-tight">No DL document</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Buttons to open in new tab */}
+                  <div className="mt-3 flex gap-2">
+                    {partner.profilePhotoUrl && (
+                      <button
+                        onClick={() => window.open(partner.profilePhotoUrl!, "_blank")}
+                        className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
+                      >
+                        <ExternalLink size={10} />
+                        <span>View Photo</span>
+                      </button>
+                    )}
+                    {partner.dlUrl && (
                       <button
                         onClick={() => window.open(partner.dlUrl!, "_blank")}
-                        className="w-full flex items-center justify-center gap-2 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC]"
-                        style={{ paddingTop: "10px", paddingBottom: "10px" }}
+                        className="flex-1 flex items-center justify-center gap-1 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-[10px] font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC] py-2"
                       >
-                        <ExternalLink size={14} />
-                        <span>Open DL in New Tab</span>
+                        <ExternalLink size={10} />
+                        <span>View DL</span>
                       </button>
-                    </div>
-                  ) : (
-                    <div
-                      className="mt-4 bg-[#FFF5F5] border border-[#FECACA] rounded-xl flex items-center gap-2 text-[#DC2626] text-xs font-semibold"
-                      style={{ padding: "12px" }}
-                    >
-                      <ShieldAlert size={16} />
-                      <span>No DL document uploaded yet</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 flex gap-3">
                   <button
                     disabled={verifyingId === partner.id}
-                    onClick={() => handleVerifyPartner(partner.id, partner.name, "APPROVED")}
+                    onClick={() => openDecisionModal(partner.id, partner.name, "APPROVED")}
                     className="flex-1 bg-[#10B981] hover:bg-[#0E9F6E] text-white rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
                     style={{ paddingTop: "12px", paddingBottom: "12px" }}
                   >
@@ -337,7 +413,7 @@ export default function PartnersPage() {
                   </button>
                   <button
                     disabled={verifyingId === partner.id}
-                    onClick={() => handleVerifyPartner(partner.id, partner.name, "REJECTED")}
+                    onClick={() => openDecisionModal(partner.id, partner.name, "REJECTED")}
                     className="flex-1 bg-white hover:bg-[#FFF5F5] border border-[#FECACA] text-[#DC2626] rounded-full text-xs font-bold active:scale-95 transition-all cursor-pointer"
                     style={{ paddingTop: "12px", paddingBottom: "12px" }}
                   >
@@ -385,6 +461,7 @@ export default function PartnersPage() {
             {filteredPartners.map((partner) => {
               const isApproved = partner.profileStatus === "APPROVED";
               const isPending = partner.profileStatus === "PENDING";
+              const isIncomplete = !partner.profileStatus || partner.profileStatus === "INCOMPLETE" || partner.profileStatus === "NOT_SUBMITTED";
               return (
                 <div
                   key={partner.id}
@@ -404,11 +481,31 @@ export default function PartnersPage() {
                           paddingRight: "10px",
                           paddingTop: "4px",
                           paddingBottom: "4px",
-                          backgroundColor: isApproved ? "#E5F4E3" : isPending ? "#FFF3E0" : "#FDECEA",
-                          color: isApproved ? "#1F7A1F" : isPending ? "#E65100" : "#B71C1C"
+                          backgroundColor: isApproved
+                            ? "#E5F4E3"
+                            : isPending
+                            ? "#FFF3E0"
+                            : isIncomplete
+                            ? "#FFF4D8"
+                            : "#FDECEA",
+                          color: isApproved
+                            ? "#1F7A1F"
+                            : isPending
+                            ? "#E65100"
+                            : isIncomplete
+                            ? "#9A6200"
+                            : "#B71C1C"
                         }}
                       >
-                        {isApproved ? <BadgeCheck size={12} /> : isPending ? <ShieldAlert size={12} /> : <BadgeAlert size={12} />}
+                        {isApproved ? (
+                          <BadgeCheck size={12} />
+                        ) : isPending ? (
+                          <ShieldAlert size={12} />
+                        ) : isIncomplete ? (
+                          <ShieldAlert size={12} />
+                        ) : (
+                          <BadgeAlert size={12} />
+                        )}
                         {partner.profileStatus || "INCOMPLETE"}
                       </span>
                     </div>
@@ -503,6 +600,88 @@ export default function PartnersPage() {
             >
               {clearingId === selectedPayout.id ? "Processing..." : "Confirm & Mark as Paid"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {decisionModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in shadow-xl flex flex-col gap-5 text-center">
+            {decisionModal.status === "idle" && (
+              <>
+                <div className="mx-auto h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
+                  <ShieldAlert size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#111111]">
+                    {decisionModal.action === "APPROVED" ? "Approve" : "Reject"} License?
+                  </h3>
+                  <p className="text-xs text-[#66666A] mt-2 leading-relaxed">
+                    Are you sure you want to {decisionModal.action === "APPROVED" ? "approve" : "reject"} the driver's license for <strong>{decisionModal.partnerName}</strong>? This action will update their account status immediately.
+                  </p>
+                </div>
+                <div className="flex gap-3 mt-2">
+                  <button
+                    onClick={() => setDecisionModal((prev) => ({ ...prev, isOpen: false }))}
+                    className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-[#66666A] font-semibold py-3 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={executeVerifyPartner}
+                    className={`flex-1 text-white font-bold py-3 rounded-full text-xs active:scale-95 transition-all cursor-pointer ${
+                      decisionModal.action === "APPROVED" ? "bg-[#10B981] hover:bg-[#0E9F6E]" : "bg-[#DC2626] hover:bg-[#B71C1C]"
+                    }`}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </>
+            )}
+
+            {decisionModal.status === "loading" && (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <svg className="animate-spin h-8 w-8 text-[#ED7D4B]" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span className="text-[#6C6C70] text-sm font-semibold tracking-wide">Processing request...</span>
+              </div>
+            )}
+
+            {decisionModal.status === "success" && (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                  <CheckCircle2 size={28} />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-[#111111]">Action Complete</h4>
+                  <p className="text-xs text-[#66666A] mt-2 px-2">
+                    {decisionModal.message}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {decisionModal.status === "error" && (
+              <>
+                <div className="mx-auto h-12 w-12 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+                  <BadgeAlert size={28} />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-[#111111]">Verification Failed</h4>
+                  <p className="text-xs text-[#DC2626] mt-2 bg-red-50 border border-red-100 p-2.5 rounded-xl font-medium leading-relaxed">
+                    {decisionModal.message}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setDecisionModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="w-full bg-[#111111] hover:bg-black text-white font-semibold py-3 rounded-full text-xs active:scale-95 transition-all cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
