@@ -2007,12 +2007,12 @@ export default function CatalogPage() {
                           <div className="flex flex-wrap gap-2 mt-2">
                             {item.servingInfo && (
                               <span className="bg-gray-50 border border-gray-100 text-[#5F6064] text-[10px] px-2.5 py-0.5 rounded-md">
-                                🍳 {item.servingInfo}
+                                {item.servingInfo}
                               </span>
                             )}
                             {item.pieces && (
                               <span className="bg-gray-50 border border-gray-100 text-[#5F6064] text-[10px] px-2.5 py-0.5 rounded-md">
-                                🍕 {item.pieces}
+                                {item.pieces}
                               </span>
                             )}
                           </div>
