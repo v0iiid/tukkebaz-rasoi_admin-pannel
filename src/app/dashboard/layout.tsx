@@ -22,11 +22,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else {
       setUser(admin);
       setAuthenticated(true);
-      
+
       // Global Data Prefetching to populate cache for all tabs instantly
       if (!GlobalCache.preloaded) {
         GlobalCache.preloaded = true;
-        
+
         // 1. Partners & Payouts Preload (needed for navigation badge)
         Promise.all([
           api.getPendingPartners().catch(() => []),
@@ -36,16 +36,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           GlobalCache.partnersPending = pending || [];
           GlobalCache.partnersAll = all || [];
           GlobalCache.partnersPayouts = payouts || [];
-          if (pending && pending.length > 0) setPendingPartnersCount(pending.length);
+          const totalCount = (pending || []).length + (payouts || []).length;
+          setPendingPartnersCount(totalCount);
         });
       } else {
         // Just update badge if already preloaded
-        if (GlobalCache.partnersPending) {
-          setPendingPartnersCount(GlobalCache.partnersPending.length);
-        }
+        const totalCount = (GlobalCache.partnersPending || []).length + (GlobalCache.partnersPayouts || []).length;
+        setPendingPartnersCount(totalCount);
       }
     }
   }, [router, pathname]);
+
+  // Synchronize badge count from GlobalCache changes dynamically (e.g. on verification/payout clearance)
+  useEffect(() => {
+    const syncCount = () => {
+      const pendingCount = (GlobalCache.partnersPending || []).length;
+      const payoutsCount = (GlobalCache.partnersPayouts || []).length;
+      setPendingPartnersCount(pendingCount + payoutsCount);
+    };
+    const interval = setInterval(syncCount, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     removeAdminToken();
@@ -76,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[#ECECEE] text-[#111111] font-sans pb-16">
       {/* Header matching Mobile UI with inline style fallback */}
-      <header 
+      <header
         className="max-w-[1200px] mx-auto flex flex-col gap-4"
         style={{ paddingLeft: "24px", paddingRight: "24px", paddingTop: "24px" }}
       >
@@ -97,8 +108,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Tab Switcher Navigation Bar */}
-        <div 
-          className="flex rounded-full bg-white border border-[#EBEBEF] shadow-sm self-start overflow-x-auto whitespace-nowrap max-w-full scrollbar-none gap-1 mt-2"
+        <div
+          className="flex rounded-full bg-white border border-[#EBEBEF] shadow-sm self-start  whitespace-nowrap max-w-full scrollbar-none gap-1 mt-2"
           style={{ padding: "6px" }}
         >
           {navLinks.map((link) => {
@@ -109,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative rounded-full text-sm font-semibold transition-all cursor-pointer h-11 flex items-center justify-center`}
+                className={`relative overflow-visible rounded-full text-sm font-semibold transition-all cursor-pointer h-11 flex items-center justify-center gap-2`}
                 style={{
                   paddingLeft: "24px",
                   paddingRight: "24px",
@@ -117,9 +128,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   color: isActive ? "#FFFFFF" : "#66666A",
                 }}
               >
-                {link.label}
+                <span>{link.label}</span>
                 {link.label === "Partners" && pendingPartnersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#F04646] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-sm">
+                  <span className="absolute -top-1 -right-1 bg-[#F04646] text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center lg:border-2 border border-white shadow-sm px-1.5">
                     {pendingPartnersCount}
                   </span>
                 )}
@@ -130,7 +141,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Responsive viewport */}
-      <main 
+      <main
         className="max-w-[1200px] mx-auto"
         style={{ paddingLeft: "24px", paddingRight: "24px", marginTop: "32px" }}
       >

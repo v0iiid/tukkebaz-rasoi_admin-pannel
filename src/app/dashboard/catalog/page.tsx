@@ -172,12 +172,16 @@ export default function CatalogPage() {
           if (!res?.url || !res?.public_id) {
             throw new Error("Upload failed to return valid image data.");
           }
-          const newIcons = [
-            ...homeIcons,
-            { url: res.url, public_id: res.public_id }
-          ].slice(0, 5);
-          setHomeIcons(newIcons);
-          GlobalCache.catalogHomeIcons = newIcons;
+          setHomeIcons((prev) => {
+            const newIcons = [
+              ...prev,
+              { url: res.url, public_id: res.public_id }
+            ].slice(0, 5);
+            GlobalCache.catalogHomeIcons = newIcons;
+            // Persist to localStorage so icons survive refresh
+            try { localStorage.setItem("hero_icons_cache", JSON.stringify(newIcons)); } catch {}
+            return newIcons;
+          });
         } catch (err: any) {
           alert(err.message || "Image upload failed.");
         } finally {
@@ -216,9 +220,22 @@ export default function CatalogPage() {
       GlobalCache.catalogServices = servicesData;
       GlobalCache.catalogDeliveryItems = dItemsData;
       GlobalCache.catalogPendingCounts = newCounts;
-      
-      GlobalCache.catalogHomeIcons = iconsData || [];
-      setHomeIcons(iconsData || []);
+
+      // Merge hero images from API with localStorage cache
+      // This ensures newly uploaded icons survive refresh even if the integration API hasn't synced yet
+      let mergedIcons = iconsData || [];
+      try {
+        const cached = JSON.parse(localStorage.getItem("hero_icons_cache") || "[]");
+        if (Array.isArray(cached) && cached.length > 0) {
+          const apiIds = new Set(mergedIcons.map((i: any) => i.public_id));
+          const newFromCache = cached.filter((c: any) => c?.url && c?.public_id && !apiIds.has(c.public_id));
+          mergedIcons = [...mergedIcons, ...newFromCache].slice(0, 5);
+        }
+      } catch {}
+      // Update localStorage with latest merged state
+      try { localStorage.setItem("hero_icons_cache", JSON.stringify(mergedIcons)); } catch {}
+      GlobalCache.catalogHomeIcons = mergedIcons;
+      setHomeIcons(mergedIcons);
 
       setRooms(roomsData);
       setServices(servicesData);
@@ -588,9 +605,12 @@ export default function CatalogPage() {
                       setUploadingField("homeIconUpload");
                       try {
                         await api.deleteHeroImage(img.public_id);
-                        const newIcons = homeIcons.filter((_, i) => i !== idx);
-                        setHomeIcons(newIcons);
-                        GlobalCache.catalogHomeIcons = newIcons;
+                        setHomeIcons((prev) => {
+                          const newIcons = prev.filter((icon) => icon.public_id !== img.public_id);
+                          GlobalCache.catalogHomeIcons = newIcons;
+                          try { localStorage.setItem("hero_icons_cache", JSON.stringify(newIcons)); } catch {}
+                          return newIcons;
+                        });
                       } catch (err: any) {
                         alert(err.message || "Failed to delete image.");
                       } finally {

@@ -294,14 +294,27 @@ export default function PartnersPage() {
                   </div>
 
                   {partner.dlUrl ? (
-                    <button
-                      onClick={() => window.open(partner.dlUrl!, "_blank")}
-                      className="w-full mt-4 flex items-center justify-center gap-2 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC]"
-                      style={{ paddingTop: "10px", paddingBottom: "10px" }}
-                    >
-                      <ExternalLink size={14} />
-                      <span>View DL Document</span>
-                    </button>
+                    <div className="mt-4 flex flex-col gap-2">
+                      <div className="relative overflow-hidden rounded-xl border border-[#EBEBEF] bg-[#F4F4F5]">
+                        <img
+                          src={partner.dlUrl}
+                          className="w-full h-40 object-cover cursor-zoom-in hover:scale-102 transition-all duration-300 rounded-xl"
+                          alt="Driver License"
+                          onClick={() => window.open(partner.dlUrl!, "_blank")}
+                          onError={(e) => {
+                            (e.target as any).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => window.open(partner.dlUrl!, "_blank")}
+                        className="w-full flex items-center justify-center gap-2 bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#111111] rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer border border-[#E9E9EC]"
+                        style={{ paddingTop: "10px", paddingBottom: "10px" }}
+                      >
+                        <ExternalLink size={14} />
+                        <span>Open DL in New Tab</span>
+                      </button>
+                    </div>
                   ) : (
                     <div
                       className="mt-4 bg-[#FFF5F5] border border-[#FECACA] rounded-xl flex items-center gap-2 text-[#DC2626] text-xs font-semibold"
