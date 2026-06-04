@@ -550,10 +550,27 @@ export default function PartnersPage() {
 
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                       <span className="text-xs text-[#66666A]">Availability Status</span>
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${partner.isAvailable ? "text-[#10B981]" : "text-[#9A9AA0]"}`}>
-                        <span className={`h-2 w-2 rounded-full ${partner.isAvailable ? "bg-[#10B981] animate-pulse" : "bg-[#9A9AA0]"}`} />
-                        {partner.isAvailable ? "On Duty" : "Offline"}
-                      </span>
+                      {partner.profileStatus === "APPROVED" ? (
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${partner.isAvailable ? "text-[#10B981]" : "text-[#9A9AA0]"}`}>
+                          <span className={`h-2 w-2 rounded-full ${partner.isAvailable ? "bg-[#10B981] animate-pulse" : "bg-[#9A9AA0]"}`} />
+                          {partner.isAvailable ? "On Duty" : "Offline"}
+                        </span>
+                      ) : partner.profileStatus === "PENDING" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#D97706]">
+                          <span className="h-2 w-2 rounded-full bg-[#D97706]" />
+                          Pending Approval
+                        </span>
+                      ) : partner.profileStatus === "REJECTED" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#DC2626]">
+                          <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
+                          Rejected
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9A9AA0]">
+                          <span className="h-2 w-2 rounded-full bg-[#9A9AA0]" />
+                          Incomplete
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
