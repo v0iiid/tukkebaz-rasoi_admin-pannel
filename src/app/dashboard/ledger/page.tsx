@@ -35,10 +35,18 @@ const formatDateTime = (value?: string | null): string => {
   return date.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
 
+// Exact Expo STATUS_STYLES (AdminDashboardScreen).
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  SUCCESS: { bg: "#E5F4E3", text: "#1F7A1F" },
-  PENDING: { bg: "#FFF3E0", text: "#E65100" },
-  FAILED: { bg: "#FDECEA", text: "#B71C1C" },
+  SUCCESS: { bg: "#E8F8EE", text: "#156D35" },
+  PENDING: { bg: "#FFF4D8", text: "#9A6200" },
+  FAILED: { bg: "#FFE8EB", text: "#9A1223" },
+};
+
+// Kind badges — Expo uses pale-tinted pills (ROOM peach, SERVICE blue, DELIVERY purple).
+const KIND_BADGES: Record<string, { bg: string; text: string; label: string }> = {
+  ROOM: { bg: "#FFF0E8", text: "#A34924", label: "ROOM" },
+  SERVICE: { bg: "#EBF3FF", text: "#1D4ED8", label: "SERVICE" },
+  FOOD_GROCERY: { bg: "#F3E8FF", text: "#6B21A8", label: "DELIVERY" },
 };
 
 const isWithinPeriod = (value: string | null | undefined, period: AnalyticsPeriod): boolean => {
@@ -154,11 +162,11 @@ export default function PurchasesPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-[24px] p-6 text-center max-w-md mx-auto my-10 animate-fade-in">
-        <p className="text-red-700 font-semibold">{error}</p>
+      <div className="bg-[#FFE8EB] rounded-[24px] p-6 text-center max-w-md mx-auto my-10 animate-fade-in">
+        <p className="text-[#9A1223] font-semibold text-[14px] md:text-[15px] xl:text-[17px]">{error}</p>
         <button
           onClick={() => fetchPurchases()}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-full text-sm font-semibold active:scale-95 transition-all"
+          className="mt-4 px-5 py-2.5 bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full text-[13px] md:text-[14px] xl:text-[16px] font-semibold active:opacity-85 transition-all"
         >
           Retry Sync
         </button>

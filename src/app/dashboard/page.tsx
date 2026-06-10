@@ -53,10 +53,11 @@ const isWithinPeriod = (value: string | null | undefined, period: AnalyticsPerio
   return date >= start && date <= now;
 };
 
+// Status palette — exact values from the Expo app's STATUS_STYLES (AdminDashboardScreen).
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  SUCCESS: { bg: "#E5F4E3", text: "#1F7A1F" },
-  PENDING: { bg: "#FFF3E0", text: "#E65100" },
-  FAILED: { bg: "#FDECEA", text: "#B71C1C" },
+  SUCCESS: { bg: "#E8F8EE", text: "#156D35" },
+  PENDING: { bg: "#FFF4D8", text: "#9A6200" },
+  FAILED: { bg: "#FFE8EB", text: "#9A1223" },
 };
 
 export default function AnalyticsPage() {
@@ -135,11 +136,11 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-[24px] p-6 text-center max-w-md mx-auto my-10">
-        <p className="text-red-700 font-semibold">{error}</p>
+      <div className="bg-[#FFE8EB] rounded-[24px] p-6 text-center max-w-md mx-auto my-10">
+        <p className="text-[#9A1223] font-semibold text-[14px] md:text-[15px] xl:text-[17px]">{error}</p>
         <button
           onClick={() => fetchData()}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-full text-sm font-semibold active:scale-95 transition-all"
+          className="mt-4 px-5 py-2.5 bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full text-[13px] md:text-[14px] xl:text-[16px] font-semibold active:opacity-85 transition-all"
         >
           Retry Sync
         </button>
@@ -191,50 +192,54 @@ export default function AnalyticsPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
 
+  // Bar color by category — Expo accents: ROOM #ED7D4B, SERVICE #111111, FOOD #22C55E
+  const barColorFor = (kind: string) =>
+    kind === "ROOM" ? "#ED7D4B" : kind === "FOOD_GROCERY" ? "#22C55E" : "#111111";
+
   return (
-    <div className="flex flex-col gap-6 animate-fade-in">
-      <header className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-extrabold text-[#111111] tracking-tight">Analytics</h2>
-        </div>
+    // Expo wraps analytics in a single flat panel: rounded-[24px] bg-[#F7F7F8] p-5
+    <div className="rounded-[24px] md:rounded-[28px] xl:rounded-[32px] bg-[#F7F7F8] p-5 md:p-6 xl:p-8 animate-fade-in">
+      <div className="flex justify-between items-center">
+        {/* Section title — Expo: text-[20px] geist-semibold #171717 */}
+        <h2 className="text-[20px] md:text-[22px] xl:text-[25px] font-semibold text-[#171717]">Analytics</h2>
+        {/* Sync — web addition, built from dark-pill tokens */}
         <button
           onClick={() => fetchData()}
-          className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
-          style={{ paddingLeft: "20px", paddingRight: "20px", paddingTop: "10px", paddingBottom: "10px" }}
+          className="flex items-center gap-2 bg-[#111111] hover:bg-black text-white px-4 md:px-5 py-2.5 rounded-full text-[12px] md:text-[13px] xl:text-[15px] font-semibold active:scale-95 transition-all cursor-pointer"
         >
-          <RefreshCw size={12} />
+          <RefreshCw size={14} />
           <span>Sync Data</span>
         </button>
-      </header>
+      </div>
 
-      {/* Filters Container */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex gap-1 bg-white border border-[#EBEBEF] rounded-full shadow-sm p-1">
+      {/* Filter pill groups — Expo: rounded-full bg-[#E9E9EC] p-1; pills px-4 py-1.5 text-[12px]; inactive #33343A */}
+      <div className="mt-3 flex flex-row flex-wrap gap-2.5">
+        <div className="flex rounded-full bg-[#E9E9EC] p-1">
           {(["all", "day", "week", "month"] as AnalyticsPeriod[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold capitalize transition-all cursor-pointer ${
-                period === p ? "bg-[#111111] text-white" : "text-[#66666A] hover:text-[#111111] hover:bg-gray-50"
-              }`}
-              style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+              className="rounded-full px-4 md:px-5 py-1.5 md:py-2 text-[12px] md:text-[13px] xl:text-[15px] font-semibold capitalize transition-all cursor-pointer"
+              style={{
+                backgroundColor: period === p ? "#111111" : "transparent",
+                color: period === p ? "#FFFFFF" : "#33343A",
+              }}
             >
               {p}
             </button>
           ))}
         </div>
-        
-        <div className="hidden sm:block w-px bg-[#EBEBEF] mx-1"></div>
-        
-        <div className="flex gap-1 bg-white border border-[#EBEBEF] rounded-full shadow-sm p-1">
+
+        <div className="flex rounded-full bg-[#E9E9EC] p-1">
           {(["all", "SUCCESS", "FAILED"] as StatusFilter[]).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold capitalize transition-all cursor-pointer ${
-                statusFilter === s ? "bg-[#111111] text-white" : "text-[#66666A] hover:text-[#111111] hover:bg-gray-50"
-              }`}
-              style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "8px", paddingBottom: "8px" }}
+              className="rounded-full px-4 md:px-5 py-1.5 md:py-2 text-[12px] md:text-[13px] xl:text-[15px] font-semibold capitalize transition-all cursor-pointer"
+              style={{
+                backgroundColor: statusFilter === s ? "#111111" : "transparent",
+                color: statusFilter === s ? "#FFFFFF" : "#33343A",
+              }}
             >
               {s === "all" ? "All Status" : s}
             </button>
@@ -242,187 +247,107 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Stats Cards - Responsive 2x2 on Mobile, 5x1 on PC/iPad */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
-        <div 
-          className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between min-h-[110px]"
-          style={{ padding: "24px", minHeight: "120px" }}
-        >
-          <p className="text-xs font-bold text-[#66666A] tracking-wider uppercase">Total Transactions</p>
-          <p className="text-3xl font-extrabold text-[#111111] mt-2">{totalTransactions}</p>
-        </div>
-        <div 
-          className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between min-h-[110px]"
-          style={{ padding: "24px", minHeight: "120px" }}
-        >
-          <p className="text-xs font-bold text-[#66666A] tracking-wider uppercase">Successful</p>
-          <p className="text-3xl font-extrabold text-[#111111] mt-2">{successfulCount}</p>
-        </div>
-        <div 
-          className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between min-h-[110px]"
-          style={{ padding: "24px", minHeight: "120px" }}
-        >
-          <p className="text-xs font-bold text-[#66666A] tracking-wider uppercase">Rooms Purchased</p>
-          <p className="text-3xl font-extrabold text-[#111111] mt-2">{roomsPurchased}</p>
-        </div>
-        <div 
-          className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between min-h-[110px]"
-          style={{ padding: "24px", minHeight: "120px" }}
-        >
-          <p className="text-xs font-bold text-[#66666A] tracking-wider uppercase">Services Purchased</p>
-          <p className="text-3xl font-extrabold text-[#111111] mt-2">{servicesPurchased}</p>
-        </div>
-        <div 
-          className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between min-h-[110px]"
-          style={{ padding: "24px", minHeight: "120px" }}
-        >
-          <p className="text-xs font-bold text-[#66666A] tracking-wider uppercase">Food/Grocery</p>
-          <p className="text-3xl font-extrabold text-[#111111] mt-2">{foodPurchased}</p>
-        </div>
+      {/* Metric cards — Expo: rounded-2xl bg-white p-4; label text-[11px] geist-bold uppercase #77777D; value text-[26px] */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 md:gap-3 xl:gap-4 mt-4">
+        {[
+          { label: "Total Transactions", value: totalTransactions },
+          { label: "Successful", value: successfulCount },
+          { label: "Rooms Purchased", value: roomsPurchased },
+          { label: "Services Purchased", value: servicesPurchased },
+          { label: "Food/Grocery", value: foodPurchased },
+        ].map((m) => (
+          <div key={m.label} className="bg-white rounded-2xl md:rounded-[20px] xl:rounded-[24px] p-4 md:p-5 xl:p-6">
+            <p className="text-[11px] md:text-[12px] xl:text-[14px] font-bold text-[#77777D] tracking-wider uppercase">{m.label}</p>
+            <p className="text-[26px] md:text-[30px] xl:text-[33px] font-bold text-[#111111] mt-2">{m.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Revenue Total */}
-      <p className="text-base font-bold text-[#111111] mt-4">
+      {/* Revenue total — Expo: text-[16px] geist-semibold #171717 */}
+      <p className="text-[16px] md:text-[18px] xl:text-[20px] font-semibold text-[#171717] mt-4">
         Revenue: INR {totalRevenue.toLocaleString("en-IN")}
       </p>
 
-      {/* Revenue Graph */}
-      <div 
-        className="bg-white rounded-[24px] p-6 mt-4 border border-[#EBEBEF] shadow-xs"
-        style={{ padding: "28px" }}
-      >
+      {/* Revenue graph card — Expo: rounded-2xl bg-white p-4 */}
+      <div className="bg-white rounded-2xl md:rounded-[20px] xl:rounded-[24px] p-4 md:p-5 xl:p-6 mt-5">
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-bold text-[#111111]">Revenue Graph</h3>
-            <p className="text-xs text-[#66666A] mt-0.5">Top items for selected period</p>
+          <div className="pr-3">
+            <h3 className="text-[18px] md:text-[20px] xl:text-[22px] font-semibold text-[#171717]">Revenue Graph</h3>
+            <p className="text-[13px] md:text-[14px] xl:text-[16px] text-[#6A6A70] mt-1">Top items for selected period</p>
           </div>
-          <span className="text-xs font-bold text-[#66666A]">INR</span>
+          <span className="text-[12px] md:text-[13px] xl:text-[15px] font-semibold text-[#5F6064]">INR</span>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4">
+        <div className="mt-4 flex flex-col gap-4">
           {revenueGraphRows.length > 0 ? (
             revenueGraphRows.map((row, index) => {
               const barWidth = maxRevenue > 0 ? Math.max(8, Math.round((row.revenue / maxRevenue) * 100)) : 8;
-              let barColor = "#111111"; // Default/Service
-              if (row.kind === "ROOM") barColor = "#ED7D4B";
-              if (row.kind === "FOOD_GROCERY") barColor = "#22C55E";
-
               return (
-                <div key={index} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-[#33343A] truncate max-w-[60%]">{row.name}</span>
-                    <span className="text-[#111111]">
-                      INR {row.revenue.toLocaleString("en-IN")} | Qty {row.count}
+                <div key={index} className="flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <span className="text-[12px] md:text-[13px] xl:text-[15px] font-semibold text-[#303036] truncate max-w-[60%]">{row.name}</span>
+                    <span className="text-[12px] md:text-[13px] xl:text-[15px] text-[#66666C]">
+                      INR {row.revenue.toLocaleString("en-IN")} | {row.count}
                     </span>
                   </div>
-                  <div className="h-3 w-full rounded-full bg-[#F2F2F3] overflow-hidden">
+                  <div className="h-3 w-full rounded-full bg-[#E9E9EC] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${barWidth}%`, backgroundColor: barColor }}
+                      style={{ width: `${barWidth}%`, backgroundColor: barColorFor(row.kind) }}
                     />
                   </div>
                 </div>
               );
             })
           ) : (
-            <p className="text-xs text-[#66666A] italic py-8 text-center">
+            <p className="text-[14px] md:text-[15px] xl:text-[17px] text-[#646468] py-4">
               Graph will appear after successful purchases.
             </p>
           )}
         </div>
       </div>
 
-      {/* Latest Activity Sections */}
-      <div className="mt-6 flex flex-col xl:flex-row gap-6">
-        
-        {/* Bookings */}
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-[#111111] mb-3">Latest Bookings</h3>
-          <div className="flex flex-col gap-4">
-            {latestBookings.length > 0 ? (
-              latestBookings.map((tx) => {
-                const statusStyle = STATUS_STYLES[tx.paymentStatus] || { bg: "#F2F2F3", text: "#33343A" };
-                return (
-                  <div 
-                    key={tx.id} 
-                    className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between"
-                    style={{ padding: "20px" }}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h4 className="text-base font-bold text-[#111111]">{tx.title}</h4>
+      {/* Latest activity — Expo: text-[18px] geist-semibold #171717, cards rounded-2xl bg-white p-4 */}
+      <div className="mt-5 flex flex-col xl:flex-row gap-5 xl:gap-6">
+        {[
+          { heading: "Latest Bookings", rows: latestBookings, dateLabel: "Date", dateOf: (t: UnifiedTransaction) => formatDate(t.bookedFor), showQty: true, empty: "No bookings for this period/filter." },
+          { heading: "Latest Delivery Orders", rows: latestOrders, dateLabel: "Placed", dateOf: (t: UnifiedTransaction) => formatDateTime(t.createdAt), showQty: false, empty: "No delivery orders for this period/filter." },
+        ].map((col) => (
+          <div key={col.heading} className="flex-1">
+            <h3 className="text-[18px] md:text-[20px] xl:text-[22px] font-semibold text-[#171717] mb-3">{col.heading}</h3>
+            <div className="flex flex-col gap-3">
+              {col.rows.length > 0 ? (
+                col.rows.map((tx) => {
+                  const statusStyle = STATUS_STYLES[tx.paymentStatus] || { bg: "#F2F2F3", text: "#33343A" };
+                  return (
+                    <div key={tx.id} className="bg-white rounded-2xl md:rounded-[20px] xl:rounded-[24px] p-4 md:p-5 xl:p-6">
+                      <div className="flex justify-between items-start gap-2">
+                        <h4 className="text-[15px] md:text-[16px] xl:text-[19px] font-semibold text-[#131313]">{tx.title}</h4>
                         <span
-                          className="rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase"
-                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.text, paddingLeft: "10px", paddingRight: "10px", paddingTop: "4px", paddingBottom: "4px" }}
+                          className="shrink-0 rounded-full px-2.5 py-1 text-[11px] md:text-[12px] xl:text-[14px] font-bold"
+                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
                         >
                           {tx.paymentStatus}
                         </span>
                       </div>
-                      <p className="text-xs text-[#66666A] mt-1.5 leading-relaxed">
+                      <p className="text-[12px] md:text-[13px] xl:text-[15px] text-[#5F6064] mt-1 leading-5">
                         User: {tx.user.name} | {tx.user.email}
                       </p>
-                      <p className="text-xs text-[#66666A] mt-1">
-                        Date: {formatDate(tx.bookedFor)}
+                      <p className="text-[12px] md:text-[13px] xl:text-[15px] text-[#5F6064] mt-1">
+                        {col.dateLabel}: {col.dateOf(tx)}
+                      </p>
+                      <p className="text-[12px] md:text-[13px] xl:text-[15px] text-[#5F6064] mt-2">
+                        INR {tx.amount?.toLocaleString("en-IN")}{col.showQty ? ` | Qty ${tx.quantity || 1}` : ""}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[#EBEBEF]">
-                      <span className="text-xs font-bold text-[#66666A]">
-                        INR {tx.amount?.toLocaleString("en-IN")} | Qty {tx.quantity || 1}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-xs text-[#66666A] italic py-4">No bookings for this period/filter.</p>
-            )}
+                  );
+                })
+              ) : (
+                <p className="text-[14px] md:text-[15px] xl:text-[17px] text-[#646468] py-2">{col.empty}</p>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Delivery Orders */}
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-[#111111] mb-3">Latest Delivery Orders</h3>
-          <div className="flex flex-col gap-4">
-            {latestOrders.length > 0 ? (
-              latestOrders.map((tx) => {
-                const statusStyle = STATUS_STYLES[tx.paymentStatus] || { bg: "#F2F2F3", text: "#33343A" };
-                return (
-                  <div 
-                    key={tx.id} 
-                    className="bg-white rounded-[24px] p-5 border border-[#EBEBEF] shadow-xs flex flex-col justify-between"
-                    style={{ padding: "20px" }}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h4 className="text-base font-bold text-[#111111]">{tx.title}</h4>
-                        <span
-                          className="rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase"
-                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.text, paddingLeft: "10px", paddingRight: "10px", paddingTop: "4px", paddingBottom: "4px" }}
-                        >
-                          {tx.paymentStatus}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#66666A] mt-1.5 leading-relaxed">
-                        User: {tx.user.name} | {tx.user.email}
-                      </p>
-                      <p className="text-xs text-[#66666A] mt-1">
-                        Placed: {formatDateTime(tx.createdAt)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[#EBEBEF]">
-                      <span className="text-xs font-bold text-[#66666A]">
-                        INR {tx.amount?.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-xs text-[#66666A] italic py-4">No delivery orders for this period/filter.</p>
-            )}
-          </div>
-        </div>
-
+        ))}
       </div>
     </div>
   );

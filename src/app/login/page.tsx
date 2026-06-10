@@ -53,52 +53,39 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen w-screen flex items-center justify-center bg-[#ECECEE] px-4">
-      {/* Login Card Container */}
-      <div 
-        className="w-full max-w-[420px] bg-white border border-[#EBEBEF] rounded-[24px] shadow-sm animate-fade-in relative"
-        style={{ padding: "28px" }}
-      >
-        {/* Header */}
+    // Expo screen is bg-white px-5 py-6; web centers the card. Container scales 1.25x by xl.
+    <main className="min-h-screen w-screen flex items-center justify-center bg-white px-5 py-6">
+      {/* Card — Expo: rounded-[24px] bg-[#F7F7F8] p-5, flat (no border/shadow) */}
+      <div className="w-full max-w-[420px] md:max-w-[460px] xl:max-w-[520px] bg-[#F7F7F8] rounded-[24px] md:rounded-[28px] xl:rounded-[32px] p-5 md:p-6 xl:p-8 animate-fade-in">
+        {/* Header — title text-[28px] font-geist-bold #141414 */}
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-[28px] font-bold text-[#141414]">Admin Login</h1>
+          <h1 className="text-[28px] md:text-[32px] xl:text-[35px] font-bold text-[#141414]">Admin Login</h1>
         </div>
 
-        {/* Session Expired Notification */}
+        {/* Session Expired — no Expo equivalent; styled with the Expo PENDING tokens */}
         {sessionExpired && (
-          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs animate-fade-in flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-bold text-amber-700">Session Expired</span>
-              <span className="text-amber-600 leading-relaxed">Your connection expired due to inactivity. Please sign in again.</span>
-            </div>
+          <div className="mb-4 rounded-2xl bg-[#FFF4D8] px-4 py-3 text-[#9A6200] animate-fade-in flex flex-col gap-0.5">
+            <span className="text-[14px] md:text-[15px] xl:text-[17px] font-bold">Session Expired</span>
+            <span className="text-[12px] md:text-[13px] xl:text-[15px] leading-5">Your connection expired due to inactivity. Please sign in again.</span>
           </div>
         )}
 
-        {/* Error Notification */}
+        {/* Error — Expo shows centered red text in the FAILED palette */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-[#9A1223] text-xs animate-fade-in flex items-start gap-3 font-semibold">
-            <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>{error}</span>
-          </div>
+          <p className="mb-4 text-center text-[14px] md:text-[15px] xl:text-[17px] text-[#9A1223] animate-fade-in">{error}</p>
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] text-[#55555A] font-medium pl-1" htmlFor="email">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] md:text-[15px] xl:text-[17px] text-[#55555A]" htmlFor="email">
               Email
             </label>
             <input
               id="email"
               type="email"
               required
-              className="w-full bg-[#F2F2F3] border border-[#EBEBEF] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-              style={{ paddingLeft: "16px", paddingRight: "16px", paddingTop: "12px", paddingBottom: "12px" }}
+              className="w-full bg-white border border-[#DDDEE2] rounded-xl xl:rounded-[14px] text-[14px] md:text-[15px] xl:text-[17px] text-[#111111] input-glow placeholder:text-[#9A9AA0] px-4 md:px-5 py-3 md:py-3.5"
               placeholder="admin@yourdomain.com"
               value={email}
               onChange={(e) => {
@@ -108,17 +95,17 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] text-[#55555A] font-medium pl-1" htmlFor="password">
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] md:text-[15px] xl:text-[17px] text-[#55555A]" htmlFor="password">
               Password
             </label>
-            <div className="relative flex items-center">
+            {/* Expo wraps input + Show button in a single bordered row */}
+            <div className="flex items-center bg-white border border-[#DDDEE2] rounded-xl xl:rounded-[14px] px-4 md:px-5 input-glow-within">
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 required
-                className="w-full bg-[#F2F2F3] border border-[#EBEBEF] rounded-xl text-sm text-[#111111] input-glow placeholder:text-[#9A9AA0]"
-                style={{ paddingLeft: "16px", paddingRight: "70px", paddingTop: "12px", paddingBottom: "12px" }}
+                className="flex-1 bg-transparent text-[14px] md:text-[15px] xl:text-[17px] text-[#111111] placeholder:text-[#9A9AA0] py-3 md:py-3.5 outline-none"
                 placeholder="Enter admin password"
                 value={password}
                 onChange={(e) => {
@@ -129,30 +116,25 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3.5 bg-[#E9E9EC] hover:bg-[#DEDEE2] text-[#333438] rounded-full text-xs font-bold cursor-pointer active:scale-95 transition-all"
-                style={{ paddingLeft: "12px", paddingRight: "12px", paddingTop: "6px", paddingBottom: "6px" }}
+                className="shrink-0 bg-[#E9E9EC] hover:bg-[#DEDEE2] text-[#333338] rounded-full text-[12px] md:text-[13px] xl:text-[15px] font-semibold cursor-pointer active:scale-95 transition-all px-3 py-1.5"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
+          {/* Primary button — Expo: h-12 rounded-full bg-[#ED7D4B], text-[15px] font-geist-semibold */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white font-semibold rounded-full active:scale-[0.98] transition-all duration-150 mt-2 flex items-center justify-center gap-2 cursor-pointer text-sm shadow-xs"
-            style={{ paddingTop: "14px", paddingBottom: "14px" }}
+            className="w-full h-12 md:h-12 xl:h-14 bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white font-semibold rounded-full active:opacity-85 transition-all duration-150 mt-2 flex items-center justify-center cursor-pointer text-[15px] md:text-[16px] xl:text-[19px]"
           >
-            {loading ? (
-              <span>Signing in...</span>
-            ) : (
-              <span>Login as Admin</span>
-            )}
+            {loading ? <span>Signing in...</span> : <span>Login as Admin</span>}
           </button>
         </form>
 
-        {/* Server Endpoint Hint */}
-        <div className="mt-4 text-center text-[11px] text-[#6B6B70] font-medium" suppressHydrationWarning>
+        {/* Server Endpoint Hint — Expo: text-[11px] #6B6B70 centered */}
+        <div className="mt-3 text-center text-[11px] md:text-[12px] xl:text-[14px] text-[#6B6B70]" suppressHydrationWarning>
           Server: {API_BASE_URL}
         </div>
       </div>

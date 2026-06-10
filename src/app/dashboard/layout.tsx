@@ -65,13 +65,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen w-screen bg-[#ECECEE] flex items-center justify-center">
+      <div className="min-h-screen w-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 animate-pulse">
           <svg className="animate-spin h-8 w-8 text-[#ED7D4B]" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <span className="text-[#6C6C70] text-sm font-medium tracking-wide">Syncing Portal...</span>
+          <span className="text-[#77777D] text-[14px] font-geist">Syncing Portal...</span>
         </div>
       </div>
     );
@@ -85,33 +85,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="min-h-screen bg-[#ECECEE] text-[#111111] font-sans pb-16">
-      {/* Header matching Mobile UI with inline style fallback */}
-      <header
-        className="max-w-[1200px] mx-auto flex flex-col gap-4"
-        style={{ paddingLeft: "24px", paddingRight: "24px", paddingTop: "24px" }}
-      >
+    // Expo: bg-white screen, px-5 (20px), top 18 / bottom 36. Web caps content width and scales padding up.
+    <div className="min-h-screen bg-white text-[#111111] font-sans pb-9 md:pb-12">
+      <header className="max-w-[1200px] mx-auto flex flex-col gap-5 px-5 md:px-6 xl:px-8 pt-[18px] md:pt-6 xl:pt-8">
+        {/* Header row — Expo: title text-[28px] geist-bold #141414; email text-[14px] #606066 */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-[#111111] tracking-tight">Admin Panel</h1>
-            <p className="text-sm text-[#66666A] mt-1 font-medium">
+          <div className="min-w-0">
+            <h1 className="text-[28px] md:text-[32px] xl:text-[35px] font-bold text-[#141414]">Admin Panel</h1>
+            <p className="text-[14px] md:text-[15px] xl:text-[17px] text-[#606066] mt-1 truncate">
               {user?.email || "tukebazrasoi04@gmail.com"}
             </p>
           </div>
+          {/* Logout — Expo: h-11 rounded-full bg-[#ED7D4B] px-5, geist-semibold white */}
           <button
             onClick={handleLogout}
-            className="bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full font-semibold transition-all active:scale-95 cursor-pointer shadow-sm"
-            style={{ paddingLeft: "24px", paddingRight: "24px", paddingTop: "10px", paddingBottom: "10px" }}
+            className="shrink-0 h-11 md:h-12 xl:h-14 px-5 md:px-6 xl:px-8 bg-[#ED7D4B] hover:bg-[#EE5B1B] text-white rounded-full font-semibold transition-all active:opacity-85 cursor-pointer text-[14px] md:text-[15px] xl:text-[17px]"
           >
             Logout
           </button>
         </div>
 
-        {/* Tab Switcher Navigation Bar */}
-        <div
-          className="flex rounded-full bg-white border border-[#EBEBEF] shadow-sm self-start  whitespace-nowrap max-w-full scrollbar-none gap-1 mt-2"
-          style={{ padding: "6px" }}
-        >
+        {/* Tab bar — Expo: rounded-full bg-[#F2F2F3] p-1, equal flex-1 tabs; active #111111, inactive #6C6C6E.
+            Width capped on web so the segmented control keeps mobile-like proportions. */}
+        <div className="flex w-full max-w-[560px] md:max-w-[680px] rounded-full bg-[#F2F2F3] p-1">
           {navLinks.map((link) => {
             const isActive =
               pathname === link.href ||
@@ -120,31 +116,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative overflow-visible rounded-full text-sm font-semibold transition-all cursor-pointer h-11 flex items-center justify-center gap-2`}
+                className="relative flex-1 h-11 md:h-12 xl:h-14 flex items-center justify-center rounded-full text-[13px] md:text-[14px] xl:text-[16px] font-semibold transition-all cursor-pointer"
                 style={{
-                  paddingLeft: "24px",
-                  paddingRight: "24px",
                   backgroundColor: isActive ? "#111111" : "transparent",
-                  color: isActive ? "#FFFFFF" : "#66666A",
+                  color: isActive ? "#FFFFFF" : "#6C6C6E",
                 }}
               >
-                <span>{link.label}</span>
-                {link.label === "Partners" && pendingPartnersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#F04646] text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center lg:border-2 border border-white shadow-sm px-1.5">
-                    {pendingPartnersCount}
-                  </span>
-                )}
+                <span className="relative">
+                  {link.label}
+                  {link.label === "Partners" && pendingPartnersCount > 0 && (
+                    <span className="absolute -top-1.5 -right-5 bg-[#F04646] text-white text-[9px] md:text-[10px] xl:text-[11px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center border border-white px-1">
+                      {pendingPartnersCount}
+                    </span>
+                  )}
+                </span>
               </Link>
             );
           })}
         </div>
       </header>
 
-      {/* Responsive viewport */}
-      <main
-        className="max-w-[1200px] mx-auto"
-        style={{ paddingLeft: "24px", paddingRight: "24px", marginTop: "32px" }}
-      >
+      {/* Content viewport — Expo content top gap mt-5; web ~mt-8 scaled */}
+      <main className="max-w-[1200px] mx-auto px-5 md:px-6 xl:px-8 mt-8 md:mt-9 xl:mt-10">
         {children}
       </main>
     </div>
